@@ -8,6 +8,7 @@ import { Loader2, Send, Sparkles, MessageSquare, Users, BarChart, LineChartIcon,
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { cn } from "@/lib/utils"
+import { MarketMetrics } from "@/components/market-metrics"
 
 interface Message {
   role: "user" | "assistant"
@@ -48,6 +49,10 @@ export default function AgentNetworkPage() {
   const [dynamicButtons, setDynamicButtons] = useState<string[]>([])
   const [dynamicButtonType, setDynamicButtonType] = useState<string | null>(null)
 
+  const [marketAnalytics, setMarketAnalytics] = useState<any>(null)
+  const [marketSummary, setMarketSummary] = useState<string | null>(null)
+  const [loadingAnalytics, setLoadingAnalytics] = useState(true)
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -57,6 +62,50 @@ export default function AgentNetworkPage() {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  useEffect(() => {
+    const fetchAnalyticsAndSummary = async () => {
+      setLoadingAnalytics(true)
+      try {
+        // Fetch analytics
+        const analyticsRes = await fetch("/api/bitscrunch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            endpoint: "/nft/market-insights/analytics",
+            params: { blockchain: "ethereum", time_range: "24h" },
+          }),
+        })
+        const analyticsData = await analyticsRes.json()
+        if (!analyticsRes.ok) throw new Error(analyticsData.error || "Failed to fetch market analytics")
+
+        const processedData = analyticsData.data?.[0] || null
+        setMarketAnalytics(processedData)
+
+        // Generate summary with Gemini
+        if (processedData) {
+          const summaryRes = await fetch("/api/gemini", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              reportData: processedData,
+              promptType: "market_analytics_summary",
+            }),
+          })
+          const summaryData = await summaryRes.json()
+          if (!summaryRes.ok) throw new Error(summaryData.error || "Failed to generate market summary")
+          setMarketSummary(summaryData.summary)
+        }
+      } catch (err: any) {
+        console.error("Error fetching market data:", err)
+        setError(`Market Analytics Error: ${err.message}`)
+      } finally {
+        setLoadingAnalytics(false)
+      }
+    }
+
+    fetchAnalyticsAndSummary()
+  }, [])
 
   const parseBotMessageForButtons = (messageContent: string) => {
     const lowerCaseContent = messageContent.toLowerCase()
@@ -216,6 +265,9 @@ export default function AgentNetworkPage() {
         <h1 className="text-2xl font-bold text-teal-100 tracking-wider">fin3Crunch AI</h1>
         <p className="text-sm text-neutral-400">Your intelligent Web3 analytics companion</p>
       </div>
+
+      {/* Market Metrics Display */}
+      <MarketMetrics analytics={marketAnalytics} summary={marketSummary} loading={loadingAnalytics} />
 
       {/* Chat Area */}
       <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">

@@ -48,6 +48,18 @@ export async function POST(req: NextRequest) {
         Historical Prices (Date, Price): ${JSON.stringify(reportData.historicalPrices.map((p: any) => ({ date: p.date, price: p.price })))}
         `
       break
+    case "market_analytics_summary":
+      prompt = `As a financial advisor, analyze the following 24-hour NFT market analytics data. Provide a concise market summary and an analysis of the market sentiment.
+      - Base your sentiment (bullish, bearish, neutral) on the change percentages (e.g., volume_change, sales_change).
+      - Explain your reasoning clearly. For example, "The market appears bullish due to a significant 15% increase in sales volume."
+      - Keep the tone professional and insightful.
+      
+      Data:
+      - Total Volume (USD): ${reportData.volume?.toFixed(2)} (Change: ${(reportData.volume_change * 100).toFixed(2)}%)
+      - Total Sales: ${reportData.sales} (Change: ${(reportData.sales_change * 100).toFixed(2)}%)
+      - Total Transactions: ${reportData.transactions} (Change: ${(reportData.transactions_change * 100).toFixed(2)}%)
+      `
+      break
     default:
       return NextResponse.json({ error: "Invalid prompt type" }, { status: 400 })
   }

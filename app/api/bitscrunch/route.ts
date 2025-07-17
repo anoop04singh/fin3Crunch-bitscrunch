@@ -79,6 +79,8 @@ export async function POST(req: NextRequest) {
     queryParams.append("sort_order", params.sort_order || "desc")
     queryParams.append("offset", params.offset || "0")
     queryParams.append("limit", params.limit || "30")
+  } else if (endpoint === "/nft/market-insights/analytics") {
+    queryParams.append("time_range", params.time_range || "24h")
   } else if (endpoint === "/nft/liquify/price_estimate") {
     if (!params.contract_address || !params.token_id) {
       console.error("Missing contract_address or token_id for /nft/liquify/price_estimate")
