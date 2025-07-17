@@ -630,7 +630,7 @@ async function callBitsCrunchAPI(endpoint: string, params: Record<string, string
     if (value) url.searchParams.append(key, value)
   })
 
-  console.log(`Calling BitsCrunch API: ${url.toString()}`)
+  console.log(`Calling BitsCrunch API URL: ${url.toString()}`)
 
   const response = await fetch(url.toString(), {
     headers: {
@@ -645,7 +645,9 @@ async function callBitsCrunchAPI(endpoint: string, params: Record<string, string
     throw new Error(`API call failed: ${response.status} ${response.statusText}`)
   }
 
-  return await response.json()
+  const data = await response.json()
+  console.log(`BitsCrunch API response for endpoint ${endpoint}:`, JSON.stringify(data, null, 2))
+  return data
 }
 
 const nftQueryFunction = {
@@ -721,6 +723,7 @@ const nftQueryFunction = {
 const chatSessions = new Map()
 
 async function handleFunctionCall(endpoint: string, args: Record<string, any>) {
+  console.log(`Handling function call for endpoint: ${endpoint} with args:`, JSON.stringify(args, null, 2))
   try {
     const rawData = await callBitsCrunchAPI(endpoint, args)
     const processedData = processAndSummarizeData(rawData, endpoint)
@@ -921,8 +924,8 @@ When asked for historical price data for a token, use 'token-historical-price' a
       if (isDetailedReportRequest && functionCalls.length > 1) {
         reportData = {}
         for (const functionCall of functionCalls) {
-          if (functionCall.name === "queryNFTData") {
-            const result = await handleFunctionCall(functionCall.name, functionCall.args)
+          if (functionCall.name === "queryNFTData" && functionCall.args.endpoint) {
+            const result = await handleFunctionCall(functionCall.args.endpoint, functionCall.args)
             if (result.success) {
               // Aggregate data based on endpoint
               if (result.endpoint.includes("metadata")) {
@@ -977,8 +980,8 @@ When asked for historical price data for a token, use 'token-historical-price' a
       } else {
         // Existing single function call handling
         for (const functionCall of functionCalls) {
-          if (functionCall.name === "queryNFTData") {
-            const result = await handleFunctionCall(functionCall.name, functionCall.args)
+          if (functionCall.name === "queryNFTData" && functionCall.args.endpoint) {
+            const result = await handleFunctionCall(functionCall.args.endpoint, functionCall.args)
 
             if (result.success) {
               responseData = {
