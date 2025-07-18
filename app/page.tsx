@@ -110,7 +110,7 @@ export default function TacticalDashboard() {
         </div>
 
         {/* Dashboard Content */}
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1">
           {activeSection === "dashboard" && <DashboardPage />}
           {activeSection === "agents" && <AgentNetworkPage />}
           {activeSection === "reports" && <DetailedReportsPage />}
