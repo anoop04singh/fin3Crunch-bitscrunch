@@ -9,7 +9,7 @@ import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } fro
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { cn } from "@/lib/utils"
 import { MarketMetrics } from "@/components/market-metrics"
-import { useAppContext } from "@/context/AppContext"
+import { useAppContext } from "@/app/context/AppContext"
 
 interface Message {
   role: "user" | "assistant"

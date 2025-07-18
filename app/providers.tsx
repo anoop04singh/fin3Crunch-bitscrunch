@@ -1,6 +1,6 @@
 "use client"
 
-import { AppProvider } from "@/context/AppContext"
+import { AppProvider } from "@/app/context/AppContext"
 import { ReactNode } from "react"
 
 export function Providers({ children }: { children: ReactNode }) {

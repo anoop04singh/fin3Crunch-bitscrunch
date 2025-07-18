@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Loader2, Wallet, XCircle, CheckCircle, TrendingUp, ImageIcon } from "lucide-react"
-import { useAppContext } from "@/context/AppContext"
+import { useAppContext } from "@/app/context/AppContext"
 
 interface NftHolding {
   blockchain: string
