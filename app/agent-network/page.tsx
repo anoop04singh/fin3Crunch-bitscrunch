@@ -262,13 +262,14 @@ export default function AgentNetworkPage() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-neutral-950 to-black animate-fade-in">
-      <div className="p-6 pb-4">
-        <h1 className="text-2xl font-bold text-teal-100 tracking-wider">fin3Crunch AI</h1>
-        <p className="text-sm text-neutral-400">Your intelligent Web3 analytics companion</p>
+    <div className="flex flex-col h-[calc(100vh-4rem)] bg-gradient-to-br from-neutral-950 to-black animate-fade-in">
+      <div className="flex-shrink-0">
+        <div className="p-6 pb-4">
+          <h1 className="text-2xl font-bold text-teal-100 tracking-wider">fin3Crunch AI</h1>
+          <p className="text-sm text-neutral-400">Your intelligent Web3 analytics companion</p>
+        </div>
+        <MarketMetrics analytics={marketAnalytics} summary={marketSummary} loading={isLoading && marketAnalytics === null} />
       </div>
-
-      <MarketMetrics analytics={marketAnalytics} summary={marketSummary} loading={isLoading && marketAnalytics === null} />
 
       <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
         {messages.map((msg, index) => (
@@ -863,7 +864,7 @@ export default function AgentNetworkPage() {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-6 pt-4 bg-neutral-900 border-t border-neutral-700">
+      <div className="flex-shrink-0 p-6 pt-4 bg-neutral-900 border-t border-neutral-700">
         {suggestions.length > 0 && (
           <div className="mb-4 flex flex-wrap gap-2">
             {suggestions.map((s, i) => (

@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Loader2, Wallet, XCircle, CheckCircle, TrendingUp, ImageIcon } from "lucide-react"
 import { useAppContext } from "@/app/context/AppContext"
+import { sleep } from "@/lib/utils"
 
 interface NftHolding {
   blockchain: string
@@ -101,100 +102,102 @@ export default function CommandCenterPage() {
     }
   }
 
-  const fetchWalletData = async (address: string) => {
-    setLoading(true)
-    setError(null)
-    try {
-      const [nftRes, erc20Res, defiRes, scoreRes] = await Promise.all([
-        fetch("/api/bitscrunch", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ endpoint: "/wallet/balance/nft", walletAddress: address }),
-        }),
-        fetch("/api/bitscrunch", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ endpoint: "/wallet/balance/token", walletAddress: address }),
-        }),
-        fetch("/api/bitscrunch", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ endpoint: "/token/balance", walletAddress: address }),
-        }),
-        fetch("/api/bitscrunch", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ endpoint: "/wallet/score", walletAddress: address }),
-        }),
-      ])
+  const fetchApiData = useCallback(async (endpoint: string, walletAddress: string, params?: any) => {
+    const maxRetries = 5
+    let currentRetry = 0
+    let delay = 1000 // Initial delay of 1 second
 
-      const nftData = await nftRes.json()
-      const erc20Data = await erc20Res.json()
-      const defiData = await defiRes.json()
-      const scoreData = await scoreRes.json()
+    while (currentRetry < maxRetries) {
+      try {
+        const res = await fetch("/api/bitscrunch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ endpoint, walletAddress, params }),
+        })
+        const data = await res.json()
 
-      if (nftRes.ok) {
-        setNftHoldings(nftData.data || [])
-        console.log("Fetched NFT Holdings:", nftData.data)
-      } else {
-        console.error("Failed to fetch NFTs:", nftData.error)
-        throw new Error(nftData.error || "Failed to fetch NFTs")
+        if (res.status === 429) {
+          console.warn(
+            `Rate limit hit for ${endpoint}. Retrying in ${delay}ms... (Attempt ${currentRetry + 1}/${maxRetries})`,
+          )
+          await sleep(delay)
+          delay *= 2 // Exponential backoff
+          currentRetry++
+          continue // Try again
+        }
+
+        if (!res.ok) {
+          console.error(`Failed to fetch ${endpoint}:`, data.error)
+          throw new Error(data.error || `Failed to fetch ${endpoint}`)
+        }
+        return data.data
+      } catch (error) {
+        if (currentRetry < maxRetries - 1) {
+          console.warn(
+            `Error fetching ${endpoint}: ${error}. Retrying in ${delay}ms... (Attempt ${
+              currentRetry + 1
+            }/${maxRetries})`,
+          )
+          await sleep(delay)
+          delay *= 2
+          currentRetry++
+        } else {
+          throw error // Re-throw if max retries reached
+        }
       }
-      if (erc20Res.ok) {
-        setErc20Holdings(erc20Data.data || [])
-        console.log("Fetched ERC20 Holdings:", erc20Data.data)
-      } else {
-        console.error("Failed to fetch ERC20s:", erc20Data.error)
-        throw new Error(erc20Data.error || "Failed to fetch ERC20s")
-      }
-      if (defiRes.ok) {
-        setDefiHoldings(defiData.data || [])
-        console.log("Fetched DeFi Holdings (Token Balance):", defiData.data)
-      } else {
-        console.error("Failed to fetch DeFi (Token Balance):", defiData.error)
-        throw new Error(defiData.error || "Failed to fetch DeFi")
-      }
-      if (scoreRes.ok) {
-        setWalletScore(scoreData.data?.[0] || null)
-        console.log("Fetched Wallet Score:", scoreData.data?.[0])
-      } else {
-        console.error("Failed to fetch Wallet Score:", scoreData.error)
-        throw new Error(scoreData.error || "Failed to fetch Wallet Score")
-      }
-    } catch (err: any) {
-      console.error("Error fetching wallet data:", err)
-      setError(`Failed to load data: ${err.message || "Unknown error"}`)
-    } finally {
-      setLoading(false)
     }
-  }
+    throw new Error(`Failed to fetch ${endpoint} after ${maxRetries} retries.`)
+  }, [])
+
+  const fetchWalletData = useCallback(
+    async (address: string) => {
+      setLoading(true)
+      setError(null)
+      try {
+        const [nftHoldingsData, erc20HoldingsData, defiHoldingsData, scoreData] = await Promise.all([
+          fetchApiData("/wallet/balance/nft", address),
+          fetchApiData("/wallet/balance/token", address),
+          fetchApiData("/token/balance", address),
+          fetchApiData("/wallet/score", address),
+        ])
+
+        setNftHoldings(nftHoldingsData || [])
+        console.log("Fetched NFT Holdings:", nftHoldingsData)
+
+        setErc20Holdings(erc20HoldingsData || [])
+        console.log("Fetched ERC20 Holdings:", erc20HoldingsData)
+
+        setDefiHoldings(defiHoldingsData || [])
+        console.log("Fetched DeFi Holdings (Token Balance):", defiHoldingsData)
+
+        setWalletScore(scoreData?.[0] || null)
+        console.log("Fetched Wallet Score:", scoreData?.[0])
+      } catch (err: any) {
+        console.error("Error fetching wallet data:", err)
+        setError(`Failed to load data: ${err.message || "Unknown error"}`)
+      } finally {
+        setLoading(false)
+      }
+    },
+    [fetchApiData],
+  )
 
   const fetchNftMetadata = async (contractAddress: string, tokenId: string) => {
     setLoadingNftMetadata(true)
     setNftMetadataError(null)
     setNftMetadata(null)
     try {
-      const res = await fetch("/api/bitscrunch", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          endpoint: "/nft/metadata",
-          walletAddress: walletAddress || "0xDummyAddress", // walletAddress is not strictly required for /nft/metadata
-          params: {
-            contract_address: contractAddress,
-            token_id: tokenId,
-            blockchain: "ethereum",
-          },
-        }),
-      })
-      const data = await res.json()
-      if (res.ok) {
-        setNftMetadata(data.data?.[0] || null)
-        console.log("Fetched NFT Metadata:", data.data?.[0])
-      } else {
-        console.error("Failed to fetch NFT metadata:", data.error)
-        throw new Error(data.error || "Failed to fetch NFT metadata")
-      }
+      const data = await fetchApiData(
+        "/nft/metadata",
+        walletAddress || "0xDummyAddress", // walletAddress is not strictly required for /nft/metadata
+        {
+          contract_address: contractAddress,
+          token_id: tokenId,
+          blockchain: "ethereum",
+        },
+      )
+      setNftMetadata(data?.[0] || null)
+      console.log("Fetched NFT Metadata:", data?.[0])
     } catch (err: any) {
       console.error("Error fetching NFT metadata:", err)
       setNftMetadataError(`Failed to load NFT details: ${err.message || "Unknown error"}`)
@@ -207,7 +210,7 @@ export default function CommandCenterPage() {
     if (walletAddress) {
       fetchWalletData(walletAddress)
     }
-  }, [walletAddress])
+  }, [walletAddress, fetchWalletData])
 
   const totalAssetsValue = defiHoldings.reduce((sum, item: any) => sum + (item.token_value_usd || 0), 0)
 
