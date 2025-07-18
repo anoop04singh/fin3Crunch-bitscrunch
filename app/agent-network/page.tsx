@@ -9,6 +9,7 @@ import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } fro
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { cn } from "@/lib/utils"
 import { MarketMetrics } from "@/components/market-metrics"
+import { useAppContext } from "@/context/AppContext"
 
 interface Message {
   role: "user" | "assistant"
@@ -33,25 +34,17 @@ const TIME_RANGES = ["24h", "7d", "30d", "90d", "all"]
 const MARKET_INSIGHT_TYPES = ["Holders", "Traders", "Analytics"]
 
 export default function AgentNetworkPage() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content: "Hello! I'm fin3Crunch AI, your Web3 analytics assistant. How can I help you today?",
-    },
-  ])
+  const { walletAddress, blockchain, agentNetworkState, setAgentNetworkState } = useAppContext()
+  const { messages, marketAnalytics, marketSummary, isLoading, error } = agentNetworkState
+
+  // Local state for UI controls
   const [input, setInput] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [contractAddressInput, setContractAddressInput] = useState("")
   const [tokenIdInput, setTokenIdInput] = useState("")
   const [showDetailedReportInput, setShowDetailedReportInput] = useState(false)
   const [dynamicButtons, setDynamicButtons] = useState<string[]>([])
   const [dynamicButtonType, setDynamicButtonType] = useState<string | null>(null)
-
-  const [marketAnalytics, setMarketAnalytics] = useState<any>(null)
-  const [marketSummary, setMarketSummary] = useState<string | null>(null)
-  const [loadingAnalytics, setLoadingAnalytics] = useState(true)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -64,48 +57,60 @@ export default function AgentNetworkPage() {
   }, [messages])
 
   useEffect(() => {
-    const fetchAnalyticsAndSummary = async () => {
-      setLoadingAnalytics(true)
-      try {
-        // Fetch analytics
-        const analyticsRes = await fetch("/api/bitscrunch", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            endpoint: "/nft/market-insights/analytics",
-            params: { blockchain: "ethereum", time_range: "24h" },
-          }),
-        })
-        const analyticsData = await analyticsRes.json()
-        if (!analyticsRes.ok) throw new Error(analyticsData.error || "Failed to fetch market analytics")
-
-        const processedData = analyticsData.data?.[0] || null
-        setMarketAnalytics(processedData)
-
-        // Generate summary with Gemini
-        if (processedData) {
-          const summaryRes = await fetch("/api/gemini", {
+    // Only fetch initial analytics if they haven't been fetched yet
+    if (marketAnalytics === null) {
+      const fetchAnalyticsAndSummary = async () => {
+        setAgentNetworkState((prev) => ({ ...prev, isLoading: true, error: null }))
+        try {
+          // Fetch analytics
+          const analyticsRes = await fetch("/api/bitscrunch", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              reportData: processedData,
-              promptType: "market_analytics_summary",
+              endpoint: "/nft/market-insights/analytics",
+              params: { blockchain: "ethereum", time_range: "24h" },
             }),
           })
-          const summaryData = await summaryRes.json()
-          if (!summaryRes.ok) throw new Error(summaryData.error || "Failed to generate market summary")
-          setMarketSummary(summaryData.summary)
-        }
-      } catch (err: any) {
-        console.error("Error fetching market data:", err)
-        setError(`Market Analytics Error: ${err.message}`)
-      } finally {
-        setLoadingAnalytics(false)
-      }
-    }
+          const analyticsData = await analyticsRes.json()
+          if (!analyticsRes.ok) throw new Error(analyticsData.error || "Failed to fetch market analytics")
 
-    fetchAnalyticsAndSummary()
-  }, [])
+          const processedData = analyticsData.data?.[0] || null
+
+          // Generate summary with Gemini
+          let summaryText = null
+          if (processedData) {
+            const summaryRes = await fetch("/api/gemini", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                reportData: processedData,
+                promptType: "market_analytics_summary",
+              }),
+            })
+            const summaryData = await summaryRes.json()
+            if (!summaryRes.ok) throw new Error(summaryData.error || "Failed to generate market summary")
+            summaryText = summaryData.summary
+          }
+
+          setAgentNetworkState((prev) => ({
+            ...prev,
+            marketAnalytics: processedData,
+            marketSummary: summaryText,
+            isLoading: false,
+          }))
+        } catch (err: any) {
+          console.error("Error fetching market data:", err)
+          setAgentNetworkState((prev) => ({
+            ...prev,
+            isLoading: false,
+            error: `Market Analytics Error: ${err.message}`,
+          }))
+        }
+      }
+
+      fetchAnalyticsAndSummary()
+    }
+  }, [marketAnalytics, setAgentNetworkState])
 
   const parseBotMessageForButtons = (messageContent: string) => {
     const lowerCaseContent = messageContent.toLowerCase()
@@ -130,13 +135,11 @@ export default function AgentNetworkPage() {
   const generateSuggestions = (lastBotMessage: Message) => {
     const newSuggestions: string[] = []
 
-    // General suggestions
     newSuggestions.push("Show me top NFT deals")
     newSuggestions.push("What is the market sentiment for NFTs?")
     newSuggestions.push("Explain NFT rarity scores")
     newSuggestions.push("What are the current market analytics for Ethereum?")
 
-    // Contextual suggestions based on last bot message
     if (lastBotMessage.data?.endpoint?.includes("top-deals")) {
       if (lastBotMessage.data.detailedData && lastBotMessage.data.detailedData.length > 0) {
         const firstDeal = lastBotMessage.data.detailedData[0]
@@ -163,20 +166,11 @@ export default function AgentNetworkPage() {
       }
     }
 
-    setSuggestions(newSuggestions.slice(0, 5)) // Limit to 5 suggestions
+    setSuggestions(newSuggestions.slice(0, 5))
   }
 
   const handleSendMessage = async (messageContent: string) => {
     if (!messageContent.trim() && !showDetailedReportInput) return
-
-    const userMessage: Message = { role: "user", content: messageContent }
-    setMessages((prev) => [...prev, userMessage])
-    setInput("")
-    setError(null)
-    setIsLoading(true)
-    setSuggestions([]) // Clear suggestions on new message
-    setDynamicButtons([]) // Clear dynamic buttons on new message
-    setDynamicButtonType(null)
 
     let finalMessageContent = messageContent
     if (showDetailedReportInput) {
@@ -187,11 +181,25 @@ export default function AgentNetworkPage() {
       }
     }
 
+    let messageWithContext = finalMessageContent
+    if (walletAddress) {
+      messageWithContext = `CONTEXT: The user has connected wallet ${walletAddress} on the ${blockchain} network. Please use this for any relevant queries.\n\nUSER QUERY: ${finalMessageContent}`
+    }
+
+    const userMessage: Message = { role: "user", content: finalMessageContent }
+    const currentMessages = [...messages, userMessage]
+
+    setAgentNetworkState((prev) => ({ ...prev, messages: currentMessages, isLoading: true, error: null }))
+    setInput("")
+    setSuggestions([])
+    setDynamicButtons([])
+    setDynamicButtonType(null)
+
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: [...messages, { role: "user", content: finalMessageContent }] }),
+        body: JSON.stringify({ messages: currentMessages.map(m => ({...m, content: m.role === 'user' && walletAddress ? `CONTEXT: The user has connected wallet ${walletAddress} on the ${blockchain} network. Please use this for any relevant queries.\n\nUSER QUERY: ${m.content}` : m.content})) }),
       })
 
       if (!response.ok) {
@@ -219,15 +227,14 @@ export default function AgentNetworkPage() {
         whalesChartData: data.whalesChartData,
         reportData: data.reportData,
       }
-      setMessages((prev) => [...prev, botMessage])
-      generateSuggestions(botMessage) // Generate new suggestions based on bot's response
-      parseBotMessageForButtons(botMessage.content) // Parse for dynamic buttons
+      setAgentNetworkState((prev) => ({ ...prev, messages: [...prev.messages, botMessage], isLoading: false }))
+      generateSuggestions(botMessage)
+      parseBotMessageForButtons(botMessage.content)
     } catch (err: any) {
       console.error("Error sending message:", err)
-      setError(err.message || "An unexpected error occurred.")
+      setAgentNetworkState((prev) => ({ ...prev, error: err.message || "An unexpected error occurred.", isLoading: false }))
     } finally {
-      setIsLoading(false)
-      setShowDetailedReportInput(false) // Reset direct input visibility
+      setShowDetailedReportInput(false)
       setContractAddressInput("")
       setTokenIdInput("")
     }
@@ -239,9 +246,6 @@ export default function AgentNetworkPage() {
   }
 
   const handleDynamicButtonClick = (buttonText: string) => {
-    // If the button text is "Market insights on Holders", convert it to "Market insights on holders"
-    // If it's a blockchain, just use the name.
-    // If it's a time range, just use the time range.
     let messageToSend = buttonText
     if (buttonText.startsWith("Market insights on ")) {
       messageToSend = `Market insights on ${buttonText.replace("Market insights on ", "").toLowerCase()}`
@@ -250,26 +254,22 @@ export default function AgentNetworkPage() {
   }
 
   const handleDirectReportSubmit = () => {
-    if (contractAddressInput && (tokenIdInput || !tokenIdInput)) {
-      // Allow collection report without token ID
-      handleSendMessage("") // Message content will be constructed from inputs
+    if (contractAddressInput) {
+      handleSendMessage("")
     } else {
-      setError("Please enter at least a contract address for the report.")
+      setAgentNetworkState((prev) => ({ ...prev, error: "Please enter at least a contract address for the report." }))
     }
   }
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-neutral-950 to-black animate-fade-in">
-      {/* Header */}
       <div className="p-6 pb-4">
         <h1 className="text-2xl font-bold text-teal-100 tracking-wider">fin3Crunch AI</h1>
         <p className="text-sm text-neutral-400">Your intelligent Web3 analytics companion</p>
       </div>
 
-      {/* Market Metrics Display */}
-      <MarketMetrics analytics={marketAnalytics} summary={marketSummary} loading={loadingAnalytics} />
+      <MarketMetrics analytics={marketAnalytics} summary={marketSummary} loading={isLoading && marketAnalytics === null} />
 
-      {/* Chat Area */}
       <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
         {messages.map((msg, index) => (
           <div
@@ -291,7 +291,6 @@ export default function AgentNetworkPage() {
             >
               <p className="text-sm leading-relaxed">{msg.content}</p>
 
-              {/* Display Recommendation */}
               {msg.recommendation && (
                 <Card className="mt-3 bg-neutral-700 border-neutral-600 text-neutral-100">
                   <CardContent className="p-3 text-xs">
@@ -301,7 +300,6 @@ export default function AgentNetworkPage() {
                 </Card>
               )}
 
-              {/* Display Charts (Token Historical Price) */}
               {msg.chartData && msg.chartData.length > 0 && (
                 <Card className="mt-3 bg-neutral-700 border-neutral-600">
                   <CardHeader className="pb-2">
@@ -346,7 +344,6 @@ export default function AgentNetworkPage() {
                 </Card>
               )}
 
-              {/* Display Charts (Collection/Market Analytics) */}
               {msg.volumeChartData && msg.volumeChartData.length > 0 && (
                 <Card className="mt-3 bg-neutral-700 border-neutral-600">
                   <CardHeader className="pb-2">
@@ -708,7 +705,6 @@ export default function AgentNetworkPage() {
                 </Card>
               )}
 
-              {/* Display Detailed Report Data */}
               {msg.reportData && (
                 <Card className="mt-3 bg-neutral-700 border-neutral-600">
                   <CardHeader className="pb-2">
@@ -754,7 +750,6 @@ export default function AgentNetworkPage() {
                         <p>Volume (30D): ${msg.reportData.analytics.volume?.toFixed(2) || "N/A"}</p>
                         <p>Sales (30D): {msg.reportData.analytics.sales_count || "N/A"}</p>
                         <p>Floor Price: ${msg.reportData.analytics.floor_price?.toFixed(2) || "N/A"}</p>
-                        {/* Render charts for reportData as well */}
                         {msg.reportData.volumeChartData && msg.reportData.volumeChartData.length > 0 && (
                           <div className="mt-2">
                             <h5 className="text-xs font-medium text-neutral-400">Volume Chart:</h5>
@@ -858,7 +853,7 @@ export default function AgentNetworkPage() {
             )}
           </div>
         ))}
-        {isLoading && (
+        {isLoading && messages.length > 0 && (
           <div className="flex items-center justify-center py-4">
             <Loader2 className="h-6 w-6 animate-spin text-teal-100" />
             <span className="ml-2 text-neutral-400">fin3Crunch AI is thinking...</span>
@@ -868,7 +863,6 @@ export default function AgentNetworkPage() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
       <div className="p-6 pt-4 bg-neutral-900 border-t border-neutral-700">
         {suggestions.length > 0 && (
           <div className="mb-4 flex flex-wrap gap-2">

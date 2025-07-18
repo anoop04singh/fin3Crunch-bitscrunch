@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Loader2, Wallet, XCircle, CheckCircle, TrendingUp, ImageIcon } from "lucide-react"
+import { useAppContext } from "@/context/AppContext"
 
 interface NftHolding {
   blockchain: string
@@ -61,7 +62,7 @@ interface NftMetadata {
 }
 
 export default function CommandCenterPage() {
-  const [walletAddress, setWalletAddress] = useState<string | null>(null)
+  const { walletAddress, setWalletAddress } = useAppContext()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
