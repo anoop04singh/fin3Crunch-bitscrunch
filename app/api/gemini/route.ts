@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { generateText } from "ai"
-import { google } from "@ai-sdk/google"
+import { createGoogleGenerativeAI } from "@ai-sdk/google"
 
 export const maxDuration = 300 // Allow longer duration for AI generation
 
@@ -13,6 +13,11 @@ export async function POST(req: NextRequest) {
   if (!GEMINI_API_KEY) {
     return NextResponse.json({ error: "GEMINI_API_KEY is not set" }, { status: 500 })
   }
+
+  // Explicitly create a Google provider instance with the API key
+  const google = createGoogleGenerativeAI({
+    apiKey: GEMINI_API_KEY,
+  })
 
   let prompt = ""
   const systemPrompt =
