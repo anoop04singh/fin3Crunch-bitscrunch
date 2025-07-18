@@ -218,12 +218,16 @@ export default function CommandCenterPage() {
     <div className="p-6 space-y-6">
       {/* Wallet Connection Section */}
       {!walletAddress ? (
-        <Card className="bg-card border-border shadow-md p-6 text-center">
-          <CardTitle className="text-xl font-bold text-foreground mb-4">Connect Your Wallet</CardTitle>
-          <p className="text-muted-foreground mb-6">
+        <Card className="bg-neutral-900 border-neutral-700 p-6 text-center">
+          <CardTitle className="text-xl font-bold text-white mb-4">Connect Your MetaMask Wallet</CardTitle>
+          <p className="text-neutral-400 mb-6">
             Please connect your Ethereum wallet to view your NFT and Web3 analytics.
           </p>
-          <Button onClick={connectWallet} disabled={loading} size="lg">
+          <Button
+            onClick={connectWallet}
+            disabled={loading}
+            className="bg-teal-200 hover:bg-teal-700 text-zinc-900 px-8 py-3 text-lg"
+          >
             {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Wallet className="mr-2 h-5 w-5" />}
             {loading ? "Connecting..." : "Connect Wallet"}
           </Button>
@@ -235,14 +239,14 @@ export default function CommandCenterPage() {
         </Card>
       ) : (
         <>
-          <div className="text-muted-foreground text-sm mb-4">
-            Connected Wallet: <span className="text-primary font-mono">{walletAddress}</span>
+          <div className="text-neutral-400 text-sm mb-4">
+            Connected Wallet: <span className="text-orange-500 font-mono">{walletAddress}</span>
           </div>
 
           {loading && (
             <div className="flex items-center justify-center py-10">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-3 text-muted-foreground">Loading wallet data...</span>
+              <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+              <span className="ml-3 text-neutral-400">Loading wallet data...</span>
             </div>
           )}
 
@@ -254,9 +258,9 @@ export default function CommandCenterPage() {
 
           {!loading && !error && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              <Card className="lg:col-span-4 bg-card border-border shadow-md">
+              <Card className="lg:col-span-4 bg-neutral-900 border-neutral-700">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-foreground tracking-wider">NFT HOLDINGS</CardTitle>
+                  <CardTitle className="text-sm font-medium text-neutral-300 tracking-wider">NFT HOLDINGS</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {nftHoldings.length > 0 ? (
@@ -264,7 +268,7 @@ export default function CommandCenterPage() {
                       {nftHoldings.map((nft) => (
                         <div
                           key={`${nft.contract_address}-${nft.token_id}`}
-                          className="flex items-center gap-3 p-2 bg-secondary rounded hover:bg-accent transition-colors cursor-pointer"
+                          className="flex items-center gap-3 p-2 bg-neutral-800 rounded hover:bg-neutral-700 transition-colors cursor-pointer"
                           onClick={() => {
                             setSelectedNft(nft)
                             fetchNftMetadata(nft.contract_address, nft.token_id)
@@ -277,26 +281,26 @@ export default function CommandCenterPage() {
                               className="w-8 h-8 rounded object-cover"
                             />
                           ) : (
-                            <div className="w-8 h-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">
+                            <div className="w-8 h-8 bg-neutral-700 rounded flex items-center justify-center text-xs text-neutral-400">
                               <ImageIcon className="w-4 h-4" />
                             </div>
                           )}
                           <div>
-                            <div className="text-xs text-foreground font-mono">{nft.collection_name}</div>
-                            <div className="text-xs text-muted-foreground">ID: {nft.token_id}</div>
+                            <div className="text-xs text-white font-mono">{nft.collection_name}</div>
+                            <div className="text-xs text-neutral-500">ID: {nft.token_id}</div>
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-muted-foreground text-sm">No NFTs found in this wallet.</p>
+                    <p className="text-neutral-500 text-sm">No NFTs found in this wallet.</p>
                   )}
                 </CardContent>
               </Card>
 
-              <Card className="lg:col-span-4 bg-card border-border shadow-md">
+              <Card className="lg:col-span-4 bg-neutral-900 border-neutral-700">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-foreground tracking-wider">ERC20 HOLDINGS</CardTitle>
+                  <CardTitle className="text-sm font-medium text-neutral-300 tracking-wider">ERC20 HOLDINGS</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {erc20Holdings.length > 0 ? (
@@ -304,59 +308,260 @@ export default function CommandCenterPage() {
                       {erc20Holdings.map((token, index) => (
                         <div
                           key={index}
-                          className="text-xs border-l-2 border-primary pl-3 hover:bg-secondary p-2 rounded transition-colors"
+                          className="text-xs border-l-2 border-orange-500 pl-3 hover:bg-neutral-800 p-2 rounded transition-colors"
                         >
-                          <div className="text-muted-foreground font-mono">{token.token_symbol}</div>
-                          <div className="text-foreground">
+                          <div className="text-neutral-500 font-mono">{token.token_symbol}</div>
+                          <div className="text-white">
                             {token.quantity.toFixed(4)}{" "}
-                            <span className="text-primary font-mono">{token.token_name}</span>
+                            <span className="text-orange-500 font-mono">{token.token_name}</span>
                             {token.usd_value && <span> (~${token.usd_value.toFixed(2)})</span>}
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-muted-foreground text-sm">No ERC20 tokens found in this wallet.</p>
+                    <p className="text-neutral-500 text-sm">No ERC20 tokens found in this wallet.</p>
                   )}
                 </CardContent>
               </Card>
 
-              <Card className="lg:col-span-4 bg-card border-border shadow-md">
+              <Card className="lg:col-span-4 bg-neutral-900 border-neutral-700">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-foreground tracking-wider">WALLET SCORE</CardTitle>
+                  <CardTitle className="text-sm font-medium text-neutral-300 tracking-wider">WALLET SCORE</CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col items-center">
                   {walletScore ? (
                     <>
                       <div className="relative w-32 h-32 mb-4">
-                        <div className="absolute inset-0 border-2 border-primary/20 rounded-full animate-pulse"></div>
-                        <div className="absolute inset-2 border border-primary/10 rounded-full"></div>
-                        <div className="absolute inset-0 flex items-center justify-center text-4xl font-bold text-primary">
+                        <div className="absolute inset-0 border-2 border-white rounded-full opacity-60 animate-pulse"></div>
+                        <div className="absolute inset-2 border border-white rounded-full opacity-40"></div>
+                        <div className="absolute inset-4 border border-white rounded-full opacity-20"></div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-full h-px bg-white opacity-30"></div>
+                        </div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-px h-full bg-white opacity-30"></div>
+                        </div>
+                        <div className="absolute inset-0 flex items-center justify-center text-4xl font-bold text-orange-500">
                           {walletScore.wallet_score ? walletScore.wallet_score.toFixed(0) : "N/A"}
                         </div>
                       </div>
 
-                      <div className="text-xs text-muted-foreground space-y-1 w-full font-mono">
+                      <div className="text-xs text-neutral-500 space-y-1 w-full font-mono">
                         <div className="flex justify-between">
                           <span>Classification:</span>
-                          <span className="text-foreground">{walletScore.classification || "N/A"}</span>
+                          <span className="text-white">{walletScore.classification || "N/A"}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Anomalous Pattern:</span>
-                          <span className="text-foreground">{walletScore.anomalous_pattern_score.toFixed(2)}</span>
+                          <span className="text-white">{walletScore.anomalous_pattern_score.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Associated Token:</span>
+                          <span className="text-white">{walletScore.associated_token_score.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Risk Interaction:</span>
-                          <span className="text-foreground">{walletScore.risk_interaction_score.toFixed(2)}</span>
+                          <span className="text-white">{walletScore.risk_interaction_score.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Wallet Age:</span>
+                          <span className="text-white">{walletScore.wallet_age_score.toFixed(2)}</span>
                         </div>
                       </div>
                     </>
                   ) : (
-                    <p className="text-muted-foreground text-sm">Wallet score not available.</p>
+                    <p className="text-neutral-500 text-sm">Wallet score not available.</p>
                   )}
                 </CardContent>
               </Card>
+
+              <Card className="lg:col-span-8 bg-neutral-900 border-neutral-700">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-neutral-300 tracking-wider">
+                    TOTAL ASSET VALUE
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col items-center justify-center h-48">
+                  <div className="text-6xl font-bold text-white font-mono">${totalAssetsValue.toFixed(2)}</div>
+                  <p className="text-neutral-500 text-sm mt-2">Aggregated value across token holdings</p>
+                </CardContent>
+              </Card>
+
+              <Card className="lg:col-span-4 bg-neutral-900 border-neutral-700">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-neutral-300 tracking-wider">KEY METRICS</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <CheckCircle className="w-4 h-4 text-white" />
+                        <span className="text-xs text-white font-medium">Portfolio Overview</span>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-neutral-400">NFT Collections</span>
+                          <span className="text-white font-bold font-mono">{nftHoldings.length}</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-neutral-400">ERC20 Tokens</span>
+                          <span className="text-white font-bold font-mono">{erc20Holdings.length}</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-neutral-400">DeFi Positions</span>
+                          <span className="text-white font-bold font-mono">{defiHoldings.length}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <TrendingUp className="w-4 h-4 text-orange-500" />
+                        <span className="text-xs text-orange-500 font-medium">Risk & Trends</span>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-neutral-400">Overall Wallet Score</span>
+                          <span className="text-white font-bold font-mono">
+                            {walletScore?.wallet_score ? walletScore.wallet_score.toFixed(2) : "N/A"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-neutral-400">Anomalous Activity</span>
+                          <span className="text-white font-bold font-mono">
+                            {walletScore?.anomalous_pattern_score
+                              ? walletScore.anomalous_pattern_score.toFixed(2)
+                              : "N/A"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-neutral-400">Risk Interactions</span>
+                          <span className="text-white font-bold font-mono">
+                            {walletScore?.risk_interaction_score
+                              ? walletScore.risk_interaction_score.toFixed(2)
+                              : "N/A"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
+          )}
+
+          {/* NFT Detail Modal and Overlay */}
+          {selectedNft && (
+            <>
+              {/* Blurred Overlay */}
+              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 animate-fade-in" />
+
+              {/* Modal */}
+              <div className="fixed inset-0 flex items-center justify-center p-4 z-50 animate-fade-in">
+                <Card className="bg-neutral-900 border-neutral-700 w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-scale-in">
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle className="text-xl font-bold text-white tracking-wider">
+                        {nftMetadata?.collection_name || selectedNft.collection_name}
+                      </CardTitle>
+                      <p className="text-sm text-neutral-400 font-mono">Token ID: {selectedNft.token_id}</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setSelectedNft(null)
+                        setNftMetadata(null)
+                        setNftMetadataError(null)
+                      }}
+                      className="text-neutral-400 hover:text-white"
+                    >
+                      ✕
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {loadingNftMetadata ? (
+                      <div className="flex flex-col items-center justify-center py-10">
+                        <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+                        <span className="ml-3 text-neutral-400 mt-2">Loading NFT details...</span>
+                      </div>
+                    ) : nftMetadataError ? (
+                      <div className="text-red-500 text-center flex items-center justify-center py-10">
+                        <XCircle className="w-5 h-5 mr-2" /> {nftMetadataError}
+                      </div>
+                    ) : nftMetadata ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex flex-col items-center">
+                          {nftMetadata.image_url ? (
+                            <img
+                              src={nftMetadata.image_url || "/placeholder.svg"}
+                              alt={nftMetadata.collection_name}
+                              className="w-full max-w-xs rounded object-cover border border-neutral-700"
+                            />
+                          ) : (
+                            <div className="w-full max-w-xs h-48 bg-neutral-800 rounded flex items-center justify-center text-neutral-400 text-sm border border-neutral-700">
+                              No Image Available
+                            </div>
+                          )}
+                          {nftMetadata.price_estimate_usd && (
+                            <div className="mt-4 text-2xl font-bold text-white">
+                              Est. Price: ${nftMetadata.price_estimate_usd.toFixed(2)}
+                            </div>
+                          )}
+                        </div>
+                        <div className="space-y-4">
+                          <div>
+                            <h3 className="text-sm font-medium text-neutral-300 tracking-wider mb-2">DESCRIPTION</h3>
+                            <p className="text-sm text-neutral-300 leading-relaxed">
+                              {nftMetadata.description || "No description available."}
+                            </p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-medium text-neutral-300 tracking-wider mb-2">ATTRIBUTES</h3>
+                            {Array.isArray(nftMetadata.attributes) && nftMetadata.attributes.length > 0 ? (
+                              <div className="grid grid-cols-2 gap-2 text-xs">
+                                {nftMetadata.attributes.map((attr, idx) => (
+                                  <div key={idx} className="bg-neutral-800 p-2 rounded">
+                                    <span className="text-neutral-400">{attr.trait_type}:</span>{" "}
+                                    <span className="text-white">{attr.value}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-neutral-500 text-xs">No attributes found.</p>
+                            )}
+                          </div>
+                          {nftMetadata.rarity_score && (
+                            <div>
+                              <h3 className="text-sm font-medium text-neutral-300 tracking-wider mb-2">RARITY SCORE</h3>
+                              <p className="text-white font-mono text-lg">{nftMetadata.rarity_score.toFixed(2)}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-neutral-500 text-center py-10">No NFT metadata available.</p>
+                    )}
+
+                    <div className="flex gap-2 pt-4 border-t border-neutral-700">
+                      {nftMetadata?.price_estimate_usd ? (
+                        <Button className="bg-orange-500 hover:bg-orange-600 text-white">View on Marketplace</Button>
+                      ) : (
+                        <Button className="bg-red-500/20 text-red-500 cursor-not-allowed" disabled>
+                          Not available on marketplace
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
+                        className="border-neutral-700 text-neutral-400 hover:bg-neutral-800 hover:text-neutral-300 bg-transparent"
+                      >
+                        Share NFT
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </>
           )}
         </>
       )}
