@@ -26,10 +26,7 @@ interface Erc20Holding {
   blockchain_name: string
   chain_id: string
   usd_value?: number
-}
-
-interface DefiHolding {
-  token_value_usd: number
+  token_address?: string
 }
 
 interface WalletScore {
@@ -69,8 +66,8 @@ export default function CommandCenterPage() {
 
   const [nftHoldings, setNftHoldings] = useState<NftHolding[]>([])
   const [erc20Holdings, setErc20Holdings] = useState<Erc20Holding[]>([])
-  const [defiHoldings, setDefiHoldings] = useState<DefiHolding[]>([])
   const [walletScore, setWalletScore] = useState<WalletScore | null>(null)
+  const [totalAssetsValue, setTotalAssetsValue] = useState<number>(0)
 
   const [selectedNft, setSelectedNft] = useState<NftHolding | null>(null)
   const [nftMetadata, setNftMetadata] = useState<NftMetadata | null>(null)
@@ -154,24 +151,63 @@ export default function CommandCenterPage() {
       setLoading(true)
       setError(null)
       try {
-        const [nftHoldingsData, erc20HoldingsData, defiHoldingsData, scoreData] = await Promise.all([
+        const [nftHoldingsData, erc20HoldingsData, scoreData] = await Promise.all([
           fetchApiData("/wallet/balance/nft", address),
           fetchApiData("/wallet/balance/token", address),
-          fetchApiData("/token/balance", address),
           fetchApiData("/wallet/score", address),
         ])
 
         setNftHoldings(nftHoldingsData || [])
         console.log("Fetched NFT Holdings:", nftHoldingsData)
 
-        setErc20Holdings(erc20HoldingsData || [])
-        console.log("Fetched ERC20 Holdings:", erc20HoldingsData)
-
-        setDefiHoldings(defiHoldingsData || [])
-        console.log("Fetched DeFi Holdings (Token Balance):", defiHoldingsData)
-
         setWalletScore(scoreData?.[0] || null)
         console.log("Fetched Wallet Score:", scoreData?.[0])
+
+        const tokens: Erc20Holding[] = erc20HoldingsData || []
+        if (tokens.length > 0) {
+          const WETH_ADDRESS = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+          const tokenAddresses = tokens.map((token) => {
+            if (!token.token_address || token.token_address.startsWith("0x0000000000000000000000000000000000000000")) {
+              return WETH_ADDRESS
+            }
+            return token.token_address
+          })
+
+          const priceData = await fetchApiData("/token/dex_price", address, {
+            token_address: tokenAddresses.join(","),
+            blockchain: "ethereum",
+          })
+
+          const priceMap = new Map<string, number>()
+          if (priceData && Array.isArray(priceData)) {
+            priceData.forEach((priceInfo: any) => {
+              priceMap.set(priceInfo.token_address.toLowerCase(), priceInfo.usd_value)
+            })
+          }
+
+          let calculatedTotalValue = 0
+          const updatedErc20Holdings = tokens.map((token) => {
+            const addressToLookup = (
+              !token.token_address || token.token_address.startsWith("0x0000000000000000000000000000000000000000")
+                ? WETH_ADDRESS
+                : token.token_address
+            ).toLowerCase()
+
+            const price = priceMap.get(addressToLookup)
+            const usdValue = price ? token.quantity * price : 0
+            calculatedTotalValue += usdValue
+
+            return { ...token, usd_value: usdValue }
+          })
+
+          setErc20Holdings(updatedErc20Holdings)
+          console.log("Updated ERC20 Holdings with prices:", updatedErc20Holdings)
+          setTotalAssetsValue(calculatedTotalValue)
+          console.log("Calculated Total Asset Value:", calculatedTotalValue)
+        } else {
+          setErc20Holdings([])
+          setTotalAssetsValue(0)
+        }
       } catch (err: any) {
         console.error("Error fetching wallet data:", err)
         setError(`Failed to load data: ${err.message || "Unknown error"}`)
@@ -189,7 +225,7 @@ export default function CommandCenterPage() {
     try {
       const data = await fetchApiData(
         "/nft/metadata",
-        walletAddress || "0xDummyAddress", // walletAddress is not strictly required for /nft/metadata
+        walletAddress || "0xDummyAddress",
         {
           contract_address: contractAddress,
           token_id: tokenId,
@@ -212,11 +248,8 @@ export default function CommandCenterPage() {
     }
   }, [walletAddress, fetchWalletData])
 
-  const totalAssetsValue = defiHoldings.reduce((sum, item: any) => sum + (item.token_value_usd || 0), 0)
-
   return (
     <div className="p-6 space-y-6">
-      {/* Wallet Connection Section */}
       {!walletAddress ? (
         <Card className="bg-neutral-900 border-neutral-700 p-6 text-center">
           <CardTitle className="text-xl font-bold text-white mb-4">Connect Your MetaMask Wallet</CardTitle>
@@ -408,10 +441,6 @@ export default function CommandCenterPage() {
                           <span className="text-neutral-400">ERC20 Tokens</span>
                           <span className="text-white font-bold font-mono">{erc20Holdings.length}</span>
                         </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-neutral-400">DeFi Positions</span>
-                          <span className="text-white font-bold font-mono">{defiHoldings.length}</span>
-                        </div>
                       </div>
                     </div>
 
@@ -451,13 +480,9 @@ export default function CommandCenterPage() {
             </div>
           )}
 
-          {/* NFT Detail Modal and Overlay */}
           {selectedNft && (
             <>
-              {/* Blurred Overlay */}
               <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 animate-fade-in" />
-
-              {/* Modal */}
               <div className="fixed inset-0 flex items-center justify-center p-4 z-50 animate-fade-in">
                 <Card className="bg-neutral-900 border-neutral-700 w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-scale-in">
                   <CardHeader className="flex flex-row items-center justify-between">

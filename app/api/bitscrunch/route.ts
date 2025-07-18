@@ -161,6 +161,12 @@ export async function POST(req: NextRequest) {
     queryParams.append("token_address", params.token_address)
     queryParams.append("time_range", params.time_range)
     queryParams.append("interval", params.interval)
+  } else if (endpoint === "/token/dex_price") {
+    if (!params.token_address) {
+      console.error("Missing token_address for /token/dex_price")
+      return NextResponse.json({ error: "token_address is required for /token/dex_price" }, { status: 400 })
+    }
+    queryParams.append("token_address", params.token_address)
   }
 
   // Merge any additional parameters provided in the request body
