@@ -110,12 +110,22 @@ export default function TacticalDashboard() {
         </div>
 
         {/* Dashboard Content */}
-        <div className="flex-1">
-          {activeSection === "dashboard" && <DashboardPage />}
-          {activeSection === "agents" && <AgentNetworkPage />}
-          {activeSection === "reports" && <DetailedReportsPage />}
-          {activeSection === "intelligence" && <IntelligencePage />}
-          {activeSection === "systems" && <SystemsPage />}
+        <div className="flex-1 overflow-y-auto">
+          <div className={activeSection === "dashboard" ? "block h-full" : "hidden"}>
+            <DashboardPage />
+          </div>
+          <div className={activeSection === "agents" ? "block h-full" : "hidden"}>
+            <AgentNetworkPage />
+          </div>
+          <div className={activeSection === "reports" ? "block h-full" : "hidden"}>
+            <DetailedReportsPage />
+          </div>
+          <div className={activeSection === "intelligence" ? "block h-full" : "hidden"}>
+            <IntelligencePage />
+          </div>
+          <div className={activeSection === "systems" ? "block h-full" : "hidden"}>
+            <SystemsPage />
+          </div>
         </div>
       </div>
     </div>
