@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { Providers } from './providers'
+import DynamicBackground from '@/components/dynamic-background'
 
 export const metadata: Metadata = {
   title: 'Tactical Operations Dashboard',
@@ -16,7 +17,9 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className="bg-black text-white font-mono antialiased">
-        <Providers>{children}</Providers>
+        <DynamicBackground>
+          <Providers>{children}</Providers>
+        </DynamicBackground>
       </body>
     </html>
   )
