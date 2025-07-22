@@ -259,7 +259,7 @@ export default function CommandCenterPage() {
           <Button
             onClick={connectWallet}
             disabled={loading}
-            className="bg-teal-200 hover:bg-teal-700 text-zinc-900 px-8 py-3 text-lg"
+            className="bg-teal-200 hover:bg-teal-100 text-zinc-900 px-8 py-3 text-lg"
           >
             {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Wallet className="mr-2 h-5 w-5" />}
             {loading ? "Connecting..." : "Connect Wallet"}
@@ -273,12 +273,12 @@ export default function CommandCenterPage() {
       ) : (
         <>
           <div className="text-neutral-400 text-sm mb-4">
-            Connected Wallet: <span className="text-orange-500 font-mono">{walletAddress}</span>
+            Connected Wallet: <span className="text-teal-200 font-mono">{walletAddress}</span>
           </div>
 
           {loading && (
             <div className="flex items-center justify-center py-10">
-              <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+              <Loader2 className="h-8 w-8 animate-spin text-teal-200" />
               <span className="ml-3 text-neutral-400">Loading wallet data...</span>
             </div>
           )}
@@ -291,6 +291,69 @@ export default function CommandCenterPage() {
 
           {!loading && !error && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <Card className="lg:col-span-8 bg-neutral-900 border-neutral-700">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-neutral-300 tracking-wider">
+                    TOTAL ASSET VALUE
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col items-center justify-center h-48">
+                  <div className="text-6xl font-bold text-white font-mono">${totalAssetsValue.toFixed(2)}</div>
+                  <p className="text-neutral-500 text-sm mt-2">Aggregated value across token holdings</p>
+                </CardContent>
+              </Card>
+
+              <Card className="lg:col-span-4 bg-neutral-900 border-neutral-700">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-neutral-300 tracking-wider">WALLET SCORE</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col items-center">
+                  {walletScore ? (
+                    <>
+                      <div className="relative w-32 h-32 mb-4">
+                        <div className="absolute inset-0 border-2 border-white rounded-full opacity-60 animate-pulse"></div>
+                        <div className="absolute inset-2 border border-white rounded-full opacity-40"></div>
+                        <div className="absolute inset-4 border border-white rounded-full opacity-20"></div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-full h-px bg-white opacity-30"></div>
+                        </div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-px h-full bg-white opacity-30"></div>
+                        </div>
+                        <div className="absolute inset-0 flex items-center justify-center text-4xl font-bold text-teal-200">
+                          {walletScore.wallet_score ? walletScore.wallet_score.toFixed(0) : "N/A"}
+                        </div>
+                      </div>
+
+                      <div className="text-xs text-neutral-500 space-y-1 w-full font-mono">
+                        <div className="flex justify-between">
+                          <span>Classification:</span>
+                          <span className="text-white">{walletScore.classification || "N/A"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Anomalous Pattern:</span>
+                          <span className="text-white">{walletScore.anomalous_pattern_score.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Associated Token:</span>
+                          <span className="text-white">{walletScore.associated_token_score.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Risk Interaction:</span>
+                          <span className="text-white">{walletScore.risk_interaction_score.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Wallet Age:</span>
+                          <span className="text-white">{walletScore.wallet_age_score.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-neutral-500 text-sm">Wallet score not available.</p>
+                  )}
+                </CardContent>
+              </Card>
+
               <Card className="lg:col-span-4 bg-neutral-900 border-neutral-700">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium text-neutral-300 tracking-wider">NFT HOLDINGS</CardTitle>
@@ -341,12 +404,12 @@ export default function CommandCenterPage() {
                       {erc20Holdings.map((token, index) => (
                         <div
                           key={index}
-                          className="text-xs border-l-2 border-orange-500 pl-3 hover:bg-neutral-800 p-2 rounded transition-colors"
+                          className="text-xs border-l-2 border-teal-200 pl-3 hover:bg-neutral-800 p-2 rounded transition-colors"
                         >
                           <div className="text-neutral-500 font-mono">{token.token_symbol}</div>
                           <div className="text-white">
                             {token.quantity.toFixed(4)}{" "}
-                            <span className="text-orange-500 font-mono">{token.token_name}</span>
+                            <span className="text-teal-200 font-mono">{token.token_name}</span>
                             {token.usd_value && <span> (~${token.usd_value.toFixed(2)})</span>}
                           </div>
                         </div>
@@ -355,69 +418,6 @@ export default function CommandCenterPage() {
                   ) : (
                     <p className="text-neutral-500 text-sm">No ERC20 tokens found in this wallet.</p>
                   )}
-                </CardContent>
-              </Card>
-
-              <Card className="lg:col-span-4 bg-neutral-900 border-neutral-700">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-neutral-300 tracking-wider">WALLET SCORE</CardTitle>
-                </CardHeader>
-                <CardContent className="flex flex-col items-center">
-                  {walletScore ? (
-                    <>
-                      <div className="relative w-32 h-32 mb-4">
-                        <div className="absolute inset-0 border-2 border-white rounded-full opacity-60 animate-pulse"></div>
-                        <div className="absolute inset-2 border border-white rounded-full opacity-40"></div>
-                        <div className="absolute inset-4 border border-white rounded-full opacity-20"></div>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="w-full h-px bg-white opacity-30"></div>
-                        </div>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="w-px h-full bg-white opacity-30"></div>
-                        </div>
-                        <div className="absolute inset-0 flex items-center justify-center text-4xl font-bold text-orange-500">
-                          {walletScore.wallet_score ? walletScore.wallet_score.toFixed(0) : "N/A"}
-                        </div>
-                      </div>
-
-                      <div className="text-xs text-neutral-500 space-y-1 w-full font-mono">
-                        <div className="flex justify-between">
-                          <span>Classification:</span>
-                          <span className="text-white">{walletScore.classification || "N/A"}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Anomalous Pattern:</span>
-                          <span className="text-white">{walletScore.anomalous_pattern_score.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Associated Token:</span>
-                          <span className="text-white">{walletScore.associated_token_score.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Risk Interaction:</span>
-                          <span className="text-white">{walletScore.risk_interaction_score.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Wallet Age:</span>
-                          <span className="text-white">{walletScore.wallet_age_score.toFixed(2)}</span>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <p className="text-neutral-500 text-sm">Wallet score not available.</p>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card className="lg:col-span-8 bg-neutral-900 border-neutral-700">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-neutral-300 tracking-wider">
-                    TOTAL ASSET VALUE
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="flex flex-col items-center justify-center h-48">
-                  <div className="text-6xl font-bold text-white font-mono">${totalAssetsValue.toFixed(2)}</div>
-                  <p className="text-neutral-500 text-sm mt-2">Aggregated value across token holdings</p>
                 </CardContent>
               </Card>
 
@@ -446,8 +446,8 @@ export default function CommandCenterPage() {
 
                     <div>
                       <div className="flex items-center gap-2 mb-3">
-                        <TrendingUp className="w-4 h-4 text-orange-500" />
-                        <span className="text-xs text-orange-500 font-medium">Risk & Trends</span>
+                        <TrendingUp className="w-4 h-4 text-teal-200" />
+                        <span className="text-xs text-teal-200 font-medium">Risk & Trends</span>
                       </div>
                       <div className="space-y-2">
                         <div className="flex justify-between text-xs">
@@ -507,7 +507,7 @@ export default function CommandCenterPage() {
                   <CardContent className="space-y-6">
                     {loadingNftMetadata ? (
                       <div className="flex flex-col items-center justify-center py-10">
-                        <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+                        <Loader2 className="h-8 w-8 animate-spin text-teal-200" />
                         <span className="ml-3 text-neutral-400 mt-2">Loading NFT details...</span>
                       </div>
                     ) : nftMetadataError ? (
@@ -570,7 +570,9 @@ export default function CommandCenterPage() {
 
                     <div className="flex gap-2 pt-4 border-t border-neutral-700">
                       {nftMetadata?.price_estimate_usd ? (
-                        <Button className="bg-orange-500 hover:bg-orange-600 text-white">View on Marketplace</Button>
+                        <Button className="bg-teal-200 hover:bg-teal-100 text-zinc-900">
+                          View on Marketplace
+                        </Button>
                       ) : (
                         <Button className="bg-red-500/20 text-red-500 cursor-not-allowed" disabled>
                           Not available on marketplace
