@@ -343,7 +343,7 @@ export default function CommandCenterPage() {
                           <span className="text-white">{walletScore.risk_interaction_score.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>Wallet Age:</span>
+                          <span>Wallet Age Score:</span>
                           <span className="text-white">{walletScore.wallet_age_score.toFixed(2)}</span>
                         </div>
                       </div>
