@@ -51,18 +51,16 @@ const formatPercent = (num: number) => {
 const parseSummary = (summary: string | null): { title: string; content: string }[] => {
   if (!summary) return []
 
-  // Regex to find titles like **Title:** and split the content
   const parts = summary.split(/(\*\*[^*]+:\*\*)/).filter((part) => part.trim() !== "")
 
   const sections: { title: string; content: string }[] = []
   for (let i = 0; i < parts.length; i += 2) {
     if (parts[i] && parts[i + 1]) {
       sections.push({
-        title: parts[i].replace(/\*\*/g, ""),
-        content: parts[i + 1].trim().replace(/^\s*-\s*/, ""), // Clean up content
+        title: parts[i].replace(/\*\*|:/g, "").trim(),
+        content: parts[i + 1].trim().replace(/^\s*-\s*/, ""),
       })
     } else if (parts[i]) {
-      // If there's an orphaned part, add it to the last section's content or create a new one
       if (sections.length > 0) {
         sections[sections.length - 1].content += ` ${parts[i].trim()}`
       } else {
@@ -83,10 +81,10 @@ export function MarketMetrics({ analytics, summary, loading }: MarketMetricsProp
 
   if (loading) {
     return (
-      <div className="p-6 space-y-6 border-b border-neutral-800">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="px-6 pb-6 space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[...Array(3)].map((_, i) => (
-            <Card key={i} className="bg-neutral-900 border-neutral-700">
+            <Card key={i} className="bg-neutral-900/50 border-neutral-800">
               <CardHeader className="pb-2">
                 <Skeleton className="h-4 w-24" />
               </CardHeader>
@@ -97,7 +95,7 @@ export function MarketMetrics({ analytics, summary, loading }: MarketMetricsProp
             </Card>
           ))}
         </div>
-        <Card className="bg-neutral-900 border-neutral-700">
+        <Card className="bg-neutral-900/50 border-neutral-800">
           <CardHeader>
             <Skeleton className="h-5 w-48" />
           </CardHeader>
@@ -123,44 +121,44 @@ export function MarketMetrics({ analytics, summary, loading }: MarketMetricsProp
   }
 
   return (
-    <div className="p-6 space-y-6 border-b border-neutral-800 animate-fade-in">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="bg-neutral-900 border-neutral-700 transition-all hover:border-teal-200/20 hover:bg-neutral-800/50">
+    <div className="px-6 pb-6 space-y-4 animate-fade-in">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="bg-neutral-900/50 border-neutral-800 transition-all hover:border-teal-500/30 hover:bg-neutral-800/50">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-neutral-400 flex items-center gap-2">
+            <CardTitle className="text-base font-medium text-neutral-400 flex items-center gap-2">
               <DollarSign className="w-4 h-4" /> Volume (24h)
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-white">${formatNumber(analytics.volume)}</div>
+            <div className="text-2xl font-bold text-white">${formatNumber(analytics.volume)}</div>
             <div className="text-xs text-neutral-500 mt-1 flex items-center gap-2">
               {formatPercent(analytics.volume_change)}
               <span>vs previous 24h</span>
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-neutral-900 border-neutral-700 transition-all hover:border-teal-200/20 hover:bg-neutral-800/50">
+        <Card className="bg-neutral-900/50 border-neutral-800 transition-all hover:border-teal-500/30 hover:bg-neutral-800/50">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-neutral-400 flex items-center gap-2">
+            <CardTitle className="text-base font-medium text-neutral-400 flex items-center gap-2">
               <ShoppingCart className="w-4 h-4" /> Sales (24h)
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-white">{formatNumber(analytics.sales)}</div>
+            <div className="text-2xl font-bold text-white">{formatNumber(analytics.sales)}</div>
             <div className="text-xs text-neutral-500 mt-1 flex items-center gap-2">
               {formatPercent(analytics.sales_change)}
               <span>vs previous 24h</span>
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-neutral-900 border-neutral-700 transition-all hover:border-teal-200/20 hover:bg-neutral-800/50">
+        <Card className="bg-neutral-900/50 border-neutral-800 transition-all hover:border-teal-500/30 hover:bg-neutral-800/50">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-neutral-400 flex items-center gap-2">
+            <CardTitle className="text-base font-medium text-neutral-400 flex items-center gap-2">
               <ArrowLeftRight className="w-4 h-4" /> Transactions (24h)
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-white">{formatNumber(analytics.transactions)}</div>
+            <div className="text-2xl font-bold text-white">{formatNumber(analytics.transactions)}</div>
             <div className="text-xs text-neutral-500 mt-1 flex items-center gap-2">
               {formatPercent(analytics.transactions_change)}
               <span>vs previous 24h</span>
@@ -169,18 +167,18 @@ export function MarketMetrics({ analytics, summary, loading }: MarketMetricsProp
         </Card>
       </div>
       {summary && (
-        <Card className="bg-neutral-900 border-neutral-700 transition-all hover:border-teal-200/20">
+        <Card className="bg-neutral-900/50 border-neutral-800 transition-all hover:border-teal-500/30">
           <CardHeader>
-            <CardTitle className="text-base font-medium text-neutral-300 flex items-center gap-2">
+            <CardTitle className="text-lg font-medium text-neutral-300 flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-teal-200" />
               Market Sentiment Analysis
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-0 space-y-4">
+          <CardContent className="pt-0 space-y-5">
             {parsedSummary.map((section, index) => (
               <div key={index}>
-                <h3 className="font-semibold text-sm text-teal-100 mb-1">{section.title}</h3>
-                <p className="text-sm text-neutral-400 leading-relaxed">{section.content.replace(/\*/g, "")}</p>
+                <h3 className="font-semibold text-sm text-teal-200 mb-2">{section.title}</h3>
+                <p className="text-sm text-neutral-300 leading-relaxed whitespace-pre-wrap">{section.content.replace(/\*/g, "")}</p>
               </div>
             ))}
           </CardContent>

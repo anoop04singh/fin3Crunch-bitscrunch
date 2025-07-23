@@ -8,7 +8,6 @@ import {
   Loader2,
   Send,
   Sparkles,
-  MessageSquare,
   Users,
   BarChart,
   LineChartIcon,
@@ -184,20 +183,24 @@ export default function AgentNetworkPage() {
   }
 
   return (
-    <div className="relative h-full flex flex-col bg-gradient-to-br from-neutral-950 to-black">
-      <div className={cn("transition-all duration-300", isChatExpanded && "blur-sm pointer-events-none")}>
-        <div className="p-6 pb-4">
-          <h1 className="text-2xl font-bold text-teal-100 tracking-wider">fin3Crunch AI</h1>
-          <p className="text-sm text-neutral-400">Your intelligent Web3 analytics companion</p>
+    <div className="relative h-screen flex flex-col">
+      {/* Main content area, scrollable */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar">
+        <div className={cn("transition-all duration-300", isChatExpanded ? "blur-sm pointer-events-none" : "")}>
+          <div className="p-6">
+            <h1 className="text-3xl font-bold text-white tracking-wider">fin3Crunch AI</h1>
+            <p className="text-base text-neutral-400 mt-1">Your intelligent Web3 analytics companion</p>
+          </div>
+          <MarketMetrics analytics={marketAnalytics} summary={marketSummary} loading={isLoading && marketAnalytics === null} />
         </div>
-        <MarketMetrics analytics={marketAnalytics} summary={marketSummary} loading={isLoading && marketAnalytics === null} />
       </div>
 
+      {/* Chat Modal */}
       {isChatExpanded && (
         <div className="fixed inset-0 z-10 flex flex-col justify-end animate-fade-in">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsChatExpanded(false)} />
-          <Card className="relative z-20 mx-auto mb-4 h-[90vh] w-[95vw] max-w-4xl flex flex-col bg-neutral-900 border-neutral-700 shadow-2xl animate-in slide-in-from-bottom-10 duration-300">
-            <CardHeader className="flex flex-row items-center justify-between border-b border-neutral-700">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsChatExpanded(false)} />
+          <Card className="relative z-20 mx-auto mb-4 h-[85vh] w-[95vw] max-w-3xl flex flex-col bg-neutral-900/80 backdrop-blur-lg border-neutral-700 shadow-2xl animate-in slide-in-from-bottom-10 duration-300">
+            <CardHeader className="flex flex-row items-center justify-between border-b border-neutral-700/50">
               <CardTitle className="text-base font-medium text-neutral-300 flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-teal-200" />
                 fin3Crunch AI Chat
@@ -212,22 +215,22 @@ export default function AgentNetworkPage() {
                 <span className="sr-only">Minimize Chat</span>
               </Button>
             </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+            <CardContent className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
               {messages.map((msg, index) => (
                 <div
                   key={index}
-                  className={cn("flex items-start gap-3", msg.role === "user" ? "justify-end" : "justify-start")}
+                  className={cn("flex items-start gap-3 w-full", msg.role === "user" ? "justify-end" : "justify-start")}
                 >
                   {msg.role === "assistant" && (
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-teal-200 flex items-center justify-center text-zinc-900">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-teal-500/20 border border-teal-500/30 flex items-center justify-center text-teal-300">
                       <Sparkles className="w-4 h-4" />
                     </div>
                   )}
                   <div
                     className={cn(
-                      "max-w-[80%] p-3 rounded-lg shadow-md",
+                      "max-w-[85%] p-3 rounded-xl shadow",
                       msg.role === "user"
-                        ? "bg-teal-100 text-zinc-900 rounded-br-none"
+                        ? "bg-teal-200 text-zinc-900 rounded-br-none"
                         : "bg-neutral-800 text-neutral-200 rounded-bl-none",
                     )}
                   >
@@ -236,7 +239,7 @@ export default function AgentNetworkPage() {
                   </div>
                   {msg.role === "user" && (
                     <div className="flex-shrink-0 w-8 h-8 rounded-full bg-neutral-700 flex items-center justify-center text-neutral-200">
-                      <MessageSquare className="w-4 h-4" />
+                      <Users className="w-4 h-4" />
                     </div>
                   )}
                 </div>
@@ -248,16 +251,16 @@ export default function AgentNetworkPage() {
               {error && <div className="text-red-500 text-center py-4">Error: {error}</div>}
               <div ref={messagesEndRef} />
             </CardContent>
-            <div className="p-6 pt-4 bg-neutral-900 border-t border-neutral-700">
+            <div className="p-4 bg-neutral-900/50 border-t border-neutral-700/50">
               {(suggestions.length > 0 || dynamicButtons.length > 0) && (
-                <div className="mb-4 flex flex-wrap gap-2">
+                <div className="mb-3 flex flex-wrap gap-2">
                   {(dynamicButtons.length > 0 ? dynamicButtons : suggestions).map((s, i) => (
                     <Button
                       key={i}
                       variant="outline"
                       size="sm"
                       onClick={() => handleSuggestionClick(s)}
-                      className="border-teal-200 text-teal-200 hover:bg-teal-200 hover:text-zinc-900 transition-colors text-xs"
+                      className="border-teal-200/50 text-teal-200 hover:bg-teal-200 hover:text-zinc-900 transition-colors text-xs"
                     >
                       {s}
                     </Button>
@@ -266,18 +269,19 @@ export default function AgentNetworkPage() {
               )}
               <div className="flex gap-2">
                 <Input
-                  placeholder="Ask fin3Crunch AI anything about Web3..."
+                  placeholder="Ask fin3Crunch AI anything..."
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={(e) => e.key === "Enter" && !isLoading && handleSendMessage(input)}
-                  className="flex-1 bg-neutral-800 border-neutral-600 text-white placeholder-neutral-400"
+                  className="flex-1 bg-neutral-800 border-neutral-600 text-white placeholder-neutral-400 h-11"
                   disabled={isLoading}
                   autoFocus
                 />
                 <Button
                   onClick={() => handleSendMessage(input)}
                   disabled={isLoading || !input.trim()}
-                  className="bg-teal-200 hover:bg-teal-100 text-zinc-900"
+                  className="bg-teal-200 hover:bg-teal-100 text-zinc-900 h-11 w-11"
+                  size="icon"
                 >
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                 </Button>
@@ -287,12 +291,16 @@ export default function AgentNetworkPage() {
         </div>
       )}
 
-      <div className="mt-auto p-6 pt-4 bg-neutral-900/80 backdrop-blur-sm border-t border-neutral-700">
-        <Input
-          onFocus={() => setIsChatExpanded(true)}
-          placeholder="Ask fin3Crunch AI anything about Web3..."
-          className="bg-neutral-800 border-neutral-600 text-white placeholder-neutral-400"
-        />
+      {/* Collapsed Chat Input */}
+      <div className="p-4 bg-transparent border-t border-neutral-800">
+        <div className="relative">
+          <Input
+            onFocus={() => setIsChatExpanded(true)}
+            placeholder="Ask fin3Crunch AI anything..."
+            className="bg-neutral-800/50 border-neutral-700 text-white placeholder-neutral-400 pl-10 h-12"
+          />
+          <Sparkles className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
+        </div>
       </div>
     </div>
   )
