@@ -18,6 +18,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { cn } from "@/lib/utils"
 import { MarketMetrics } from "@/components/market-metrics"
 import { useAppContext } from "@/app/context/AppContext"
+import { MarkdownRenderer } from "@/components/markdown-renderer"
 
 interface Message {
   role: "user" | "assistant"
@@ -234,8 +235,11 @@ export default function AgentNetworkPage() {
                         : "bg-neutral-800 text-neutral-200 rounded-bl-none",
                     )}
                   >
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-                    {/* All chart and data rendering logic can be added here as before */}
+                    {msg.role === "assistant" ? (
+                      <MarkdownRenderer content={msg.content} />
+                    ) : (
+                      <p className="text-sm leading-relaxed">{msg.content}</p>
+                    )}
                   </div>
                   {msg.role === "user" && (
                     <div className="flex-shrink-0 w-8 h-8 rounded-full bg-neutral-700 flex items-center justify-center text-neutral-200">
