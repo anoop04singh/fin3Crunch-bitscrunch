@@ -183,7 +183,7 @@ export default function AgentNetworkPage() {
   }
 
   return (
-    <div className="relative h-screen flex flex-col">
+    <div className="relative h-full flex flex-col">
       {/* Main content area, scrollable */}
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         <div className={cn("transition-all duration-300", isChatExpanded ? "blur-sm pointer-events-none" : "")}>

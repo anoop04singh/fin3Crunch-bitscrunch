@@ -55,6 +55,7 @@ export async function POST(req: NextRequest) {
       break
     case "market_analytics_summary":
       prompt = `As a financial advisor, analyze the following 24-hour NFT market analytics data. Provide a concise market summary and an analysis of the market sentiment.
+      - IMPORTANT: The entire response must be very concise, limited to a maximum of 3-4 lines.
       - Base your sentiment (bullish, bearish, neutral) on the change percentages (e.g., volume_change, sales_change).
       - Explain your reasoning clearly. For example, "The market appears bullish due to a significant 15% increase in sales volume."
       - Keep the tone professional and insightful.
