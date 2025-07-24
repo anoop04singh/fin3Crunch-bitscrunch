@@ -4,9 +4,12 @@ import { Providers } from './providers'
 import DynamicBackground from '@/components/dynamic-background'
 
 export const metadata: Metadata = {
-  title: 'Tactical Operations Dashboard',
+  title: 'fin3crunch',
   description: 'Tactical command and control system',
-    generator: 'v0.dev'
+  icons: {
+    icon: '/logo.png',
+  },
+  generator: 'v0.dev'
 }
 
 export default function RootLayout({
