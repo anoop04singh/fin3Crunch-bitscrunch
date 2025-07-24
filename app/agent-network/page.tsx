@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -46,7 +45,7 @@ export default function AgentNetworkPage() {
   const { walletAddress, blockchain, agentNetworkState, setAgentNetworkState } = useAppContext()
   const { messages, marketAnalytics, marketSummary, isLoading, error } = agentNetworkState
 
-  const [isChatExpanded, setIsChatExpanded] = useState(false)
+  const [chatActive, setChatActive] = useState(false)
   const [input, setInput] = useState("")
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [dynamicButtons, setDynamicButtons] = useState<string[]>([])
@@ -58,10 +57,10 @@ export default function AgentNetworkPage() {
   }
 
   useEffect(() => {
-    if (isChatExpanded) {
+    if (chatActive) {
       scrollToBottom()
     }
-  }, [messages, isChatExpanded])
+  }, [messages, chatActive])
 
   useEffect(() => {
     if (marketAnalytics === null) {
@@ -184,143 +183,136 @@ export default function AgentNetworkPage() {
   }
 
   return (
-    <div className="relative h-full flex flex-col">
-      {/* Main content area, scrollable */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar">
-        <div className={cn("transition-all duration-300", isChatExpanded ? "blur-sm pointer-events-none" : "")}>
-          <div className="p-6">
-            <h1 className="text-3xl font-bold text-white tracking-wider">fin3Crunch AI</h1>
-            <p className="text-base text-neutral-400 mt-1">Your intelligent Web3 analytics companion</p>
+    <div className="h-full flex flex-col">
+      {chatActive ? (
+        <div className="flex-1 flex flex-col min-h-0 animate-fade-in">
+          <div className="flex items-center justify-between p-4 border-b border-neutral-800">
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-teal-200" />
+              fin3Crunch AI Chat
+            </h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setChatActive(false)}
+              className="text-neutral-400 hover:text-white"
+            >
+              <ChevronDown className="w-5 h-5 mr-2" />
+              Minimize
+            </Button>
           </div>
-          <MarketMetrics analytics={marketAnalytics} summary={marketSummary} loading={isLoading && marketAnalytics === null} />
-        </div>
-      </div>
-
-      {/* Chat Modal */}
-      {isChatExpanded && (
-        <div className="fixed inset-0 z-10 flex flex-col justify-end animate-fade-in">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsChatExpanded(false)} />
-          <Card className="relative z-20 mx-auto mb-4 h-[85vh] w-[95vw] max-w-3xl flex flex-col bg-neutral-900/80 backdrop-blur-lg border-neutral-700 shadow-2xl animate-in slide-in-from-bottom-10 duration-300">
-            <CardHeader className="flex flex-row items-center justify-between border-b border-neutral-700/50">
-              <CardTitle className="text-base font-medium text-neutral-300 flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-teal-200" />
-                fin3Crunch AI Chat
-              </CardTitle>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsChatExpanded(false)}
-                className="text-neutral-400 hover:text-white"
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+            {messages.map((msg, index) => (
+              <div
+                key={index}
+                className={cn("flex items-start gap-3 w-full", msg.role === "user" ? "justify-end" : "justify-start")}
               >
-                <ChevronDown className="w-5 h-5" />
-                <span className="sr-only">Minimize Chat</span>
-              </Button>
-            </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-              {messages.map((msg, index) => (
-                <div
-                  key={index}
-                  className={cn("flex items-start gap-3 w-full", msg.role === "user" ? "justify-end" : "justify-start")}
-                >
-                  {msg.role === "assistant" && (
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-teal-500/20 border border-teal-500/30 flex items-center justify-center text-teal-300">
-                      <Sparkles className="w-4 h-4" />
-                    </div>
-                  )}
-                  <div
-                    className={cn(
-                      "max-w-[85%] rounded-xl shadow",
-                      msg.role === "user"
-                        ? "bg-teal-200 text-zinc-900 rounded-br-none"
-                        : "bg-neutral-800 text-neutral-200 rounded-bl-none",
-                    )}
-                  >
-                    {msg.role === "user" ? (
-                      <p className="text-sm leading-relaxed p-3">{msg.content}</p>
-                    ) : (
-                      <div className="space-y-2 p-3">
-                        <MarkdownRenderer content={msg.content} />
-                        {msg.recommendation && <RecommendationCard recommendation={msg.recommendation} />}
-                        {msg.data?.metrics && <MetricsCard metrics={msg.data.metrics} />}
-                        {msg.data?.detailedData && <DataTable data={msg.data.detailedData} title="Top Deals" />}
-                        {msg.chartData && <LineChartCard data={msg.chartData} title="Price History" dataKey="price" color="hsl(var(--chart-1))" />}
-                        {msg.volumeChartData && <LineChartCard data={msg.volumeChartData} title="Volume Trend" dataKey="value" color="hsl(var(--chart-2))" />}
-                        {msg.salesChartData && <LineChartCard data={msg.salesChartData} title="Sales Trend" dataKey="value" color="hsl(var(--chart-3))" />}
-                        {msg.transactionsChartData && <LineChartCard data={msg.transactionsChartData} title="Transactions Trend" dataKey="value" color="hsl(var(--chart-4))" />}
-                        {msg.assetsChartData && <LineChartCard data={msg.assetsChartData} title="Assets Trend" dataKey="value" color="hsl(var(--chart-5))" />}
-                        {msg.tradersChartData && <LineChartCard data={msg.tradersChartData} title="Traders Trend" dataKey="value" color="hsl(var(--chart-1))" />}
-                        {msg.buyersChartData && <LineChartCard data={msg.buyersChartData} title="Buyers Trend" dataKey="value" color="hsl(var(--chart-2))" />}
-                        {msg.sellersChartData && <LineChartCard data={msg.sellersChartData} title="Sellers Trend" dataKey="value" color="hsl(var(--chart-3))" />}
-                        {msg.holdersChartData && <LineChartCard data={msg.holdersChartData} title="Holders Trend" dataKey="value" color="hsl(var(--chart-4))" />}
-                        {msg.whalesChartData && <LineChartCard data={msg.whalesChartData} title="Whales Trend" dataKey="value" color="hsl(var(--chart-5))" />}
-                      </div>
-                    )}
+                {msg.role === "assistant" && (
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-teal-500/20 border border-teal-500/30 flex items-center justify-center text-teal-300">
+                    <Sparkles className="w-4 h-4" />
                   </div>
-                  {msg.role === "user" && (
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-neutral-700 flex items-center justify-center text-neutral-200">
-                      <Users className="w-4 h-4" />
+                )}
+                <div
+                  className={cn(
+                    "max-w-[85%] rounded-xl shadow",
+                    msg.role === "user"
+                      ? "bg-teal-200 text-zinc-900 rounded-br-none"
+                      : "bg-neutral-800 text-neutral-200 rounded-bl-none",
+                  )}
+                >
+                  {msg.role === "user" ? (
+                    <p className="text-sm leading-relaxed p-3">{msg.content}</p>
+                  ) : (
+                    <div className="space-y-2 p-3">
+                      <MarkdownRenderer content={msg.content} />
+                      {msg.recommendation && <RecommendationCard recommendation={msg.recommendation} />}
+                      {msg.data?.metrics && <MetricsCard metrics={msg.data.metrics} />}
+                      {msg.data?.detailedData && <DataTable data={msg.data.detailedData} title="Top Deals" />}
+                      {msg.chartData && <LineChartCard data={msg.chartData} title="Price History" dataKey="price" color="hsl(var(--chart-1))" />}
+                      {msg.volumeChartData && <LineChartCard data={msg.volumeChartData} title="Volume Trend" dataKey="value" color="hsl(var(--chart-2))" />}
+                      {msg.salesChartData && <LineChartCard data={msg.salesChartData} title="Sales Trend" dataKey="value" color="hsl(var(--chart-3))" />}
+                      {msg.transactionsChartData && <LineChartCard data={msg.transactionsChartData} title="Transactions Trend" dataKey="value" color="hsl(var(--chart-4))" />}
+                      {msg.assetsChartData && <LineChartCard data={msg.assetsChartData} title="Assets Trend" dataKey="value" color="hsl(var(--chart-5))" />}
+                      {msg.tradersChartData && <LineChartCard data={msg.tradersChartData} title="Traders Trend" dataKey="value" color="hsl(var(--chart-1))" />}
+                      {msg.buyersChartData && <LineChartCard data={msg.buyersChartData} title="Buyers Trend" dataKey="value" color="hsl(var(--chart-2))" />}
+                      {msg.sellersChartData && <LineChartCard data={msg.sellersChartData} title="Sellers Trend" dataKey="value" color="hsl(var(--chart-3))" />}
+                      {msg.holdersChartData && <LineChartCard data={msg.holdersChartData} title="Holders Trend" dataKey="value" color="hsl(var(--chart-4))" />}
+                      {msg.whalesChartData && <LineChartCard data={msg.whalesChartData} title="Whales Trend" dataKey="value" color="hsl(var(--chart-5))" />}
                     </div>
                   )}
                 </div>
-              ))}
-              {isLoading && <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-6 w-6 animate-spin text-teal-100" />
-                <span className="ml-2 text-neutral-400">fin3Crunch AI is thinking...</span>
-              </div>}
-              {error && <div className="text-red-500 text-center py-4">Error: {error}</div>}
-              <div ref={messagesEndRef} />
-            </CardContent>
-            <div className="p-4 bg-neutral-900/50 border-t border-neutral-700/50">
-              {(suggestions.length > 0 || dynamicButtons.length > 0) && (
-                <div className="mb-3 flex flex-wrap gap-2">
-                  {(dynamicButtons.length > 0 ? dynamicButtons : suggestions).map((s, i) => (
-                    <Button
-                      key={i}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleSuggestionClick(s)}
-                      className="border-teal-200/50 text-teal-200 hover:bg-teal-200 hover:text-zinc-900 transition-colors text-xs"
-                    >
-                      {s}
-                    </Button>
-                  ))}
-                </div>
-              )}
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Ask fin3Crunch AI anything..."
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && !isLoading && handleSendMessage(input)}
-                  className="flex-1 bg-neutral-800 border-neutral-600 text-white placeholder-neutral-400 h-11"
-                  disabled={isLoading}
-                  autoFocus
-                />
-                <Button
-                  onClick={() => handleSendMessage(input)}
-                  disabled={isLoading || !input.trim()}
-                  className="bg-teal-200 hover:bg-teal-100 text-zinc-900 h-11 w-11"
-                  size="icon"
-                >
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                </Button>
+                {msg.role === "user" && (
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-neutral-700 flex items-center justify-center text-neutral-200">
+                    <Users className="w-4 h-4" />
+                  </div>
+                )}
               </div>
+            ))}
+            {isLoading && <div className="flex items-center justify-center py-4">
+              <Loader2 className="h-6 w-6 animate-spin text-teal-100" />
+              <span className="ml-2 text-neutral-400">fin3Crunch AI is thinking...</span>
+            </div>}
+            {error && <div className="text-red-500 text-center py-4">Error: {error}</div>}
+            <div ref={messagesEndRef} />
+          </div>
+          <div className="p-4 bg-neutral-900/50 border-t border-neutral-800">
+            {(suggestions.length > 0 || dynamicButtons.length > 0) && (
+              <div className="mb-3 flex flex-wrap gap-2">
+                {(dynamicButtons.length > 0 ? dynamicButtons : suggestions).map((s, i) => (
+                  <Button
+                    key={i}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleSuggestionClick(s)}
+                    className="border-teal-200/50 text-teal-200 hover:bg-teal-200 hover:text-zinc-900 transition-colors text-xs"
+                  >
+                    {s}
+                  </Button>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Input
+                placeholder="Ask fin3Crunch AI anything..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && !isLoading && handleSendMessage(input)}
+                className="flex-1 bg-neutral-800 border-neutral-600 text-white placeholder-neutral-400 h-11"
+                disabled={isLoading}
+                autoFocus
+              />
+              <Button
+                onClick={() => handleSendMessage(input)}
+                disabled={isLoading || !input.trim()}
+                className="bg-teal-200 hover:bg-teal-100 text-zinc-900 h-11 w-11"
+                size="icon"
+              >
+                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              </Button>
             </div>
-          </Card>
+          </div>
+        </div>
+      ) : (
+        <div className="h-full flex flex-col">
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
+            <div className="p-6">
+              <h1 className="text-3xl font-bold text-white tracking-wider">fin3Crunch AI</h1>
+              <p className="text-base text-neutral-400 mt-1">Your intelligent Web3 analytics companion</p>
+            </div>
+            <MarketMetrics analytics={marketAnalytics} summary={marketSummary} loading={isLoading && marketAnalytics === null} />
+          </div>
+          <div className="p-4 bg-transparent border-t border-neutral-800">
+            <div className="relative">
+              <Input
+                onFocus={() => setChatActive(true)}
+                placeholder="Ask fin3Crunch AI anything..."
+                className="bg-neutral-800/50 border-neutral-700 text-white placeholder-neutral-400 pl-10 h-12"
+              />
+              <Sparkles className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
+            </div>
+          </div>
         </div>
       )}
-
-      {/* Collapsed Chat Input */}
-      <div className="p-4 bg-transparent border-t border-neutral-800">
-        <div className="relative">
-          <Input
-            onFocus={() => setIsChatExpanded(true)}
-            placeholder="Ask fin3Crunch AI anything..."
-            className="bg-neutral-800/50 border-neutral-700 text-white placeholder-neutral-400 pl-10 h-12"
-          />
-          <Sparkles className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
-        </div>
-      </div>
     </div>
   )
 }
