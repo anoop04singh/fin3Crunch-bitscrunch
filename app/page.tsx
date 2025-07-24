@@ -86,20 +86,11 @@ export default function TacticalDashboard() {
       {/* Main Content */}
       <div className={`flex-1 flex flex-col ${!sidebarCollapsed ? "md:ml-0" : ""}`}>
         {/* Top Toolbar */}
-        <div className="h-16 bg-neutral-800 border-b border-neutral-700 flex items-center justify-between px-6">
+        <div className="h-16 bg-black/30 backdrop-blur-lg border-b border-neutral-800 flex items-center justify-between px-6">
           <div className="flex items-center gap-4">
             <div className="text-sm text-neutral-400">
               fin3Crunch / <span className="text-teal-100">{pageTitles[activeSection]}</span>
             </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="text-xs text-neutral-500">LAST UPDATE: 05/06/2025 20:00 UTC</div>
-            <Button variant="ghost" size="icon" className="text-neutral-400 hover:text-teal-100">
-              <Bell className="w-4 h-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="text-neutral-400 hover:text-teal-100">
-              <RefreshCw className="w-4 h-4" />
-            </Button>
           </div>
         </div>
 
