@@ -9,16 +9,16 @@ import {
   Send,
   Sparkles,
   Users,
-  BarChart,
-  LineChartIcon,
   ChevronDown,
 } from "lucide-react"
-import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { cn } from "@/lib/utils"
 import { MarketMetrics } from "@/components/market-metrics"
 import { useAppContext } from "@/app/context/AppContext"
 import { MarkdownRenderer } from "@/components/markdown-renderer"
+import { RecommendationCard } from "@/components/chat/recommendation-card"
+import { MetricsCard } from "@/components/chat/metrics-card"
+import { DataTable } from "@/components/chat/data-table"
+import { LineChartCard } from "@/components/chat/line-chart-card"
 
 interface Message {
   role: "user" | "assistant"
@@ -229,16 +229,31 @@ export default function AgentNetworkPage() {
                   )}
                   <div
                     className={cn(
-                      "max-w-[85%] p-3 rounded-xl shadow",
+                      "max-w-[85%] rounded-xl shadow",
                       msg.role === "user"
                         ? "bg-teal-200 text-zinc-900 rounded-br-none"
                         : "bg-neutral-800 text-neutral-200 rounded-bl-none",
                     )}
                   >
-                    {msg.role === "assistant" ? (
-                      <MarkdownRenderer content={msg.content} />
+                    {msg.role === "user" ? (
+                      <p className="text-sm leading-relaxed p-3">{msg.content}</p>
                     ) : (
-                      <p className="text-sm leading-relaxed">{msg.content}</p>
+                      <div className="space-y-2 p-3">
+                        <MarkdownRenderer content={msg.content} />
+                        {msg.recommendation && <RecommendationCard recommendation={msg.recommendation} />}
+                        {msg.data?.metrics && <MetricsCard metrics={msg.data.metrics} />}
+                        {msg.data?.detailedData && <DataTable data={msg.data.detailedData} title="Top Deals" />}
+                        {msg.chartData && <LineChartCard data={msg.chartData} title="Price History" dataKey="price" color="hsl(var(--chart-1))" />}
+                        {msg.volumeChartData && <LineChartCard data={msg.volumeChartData} title="Volume Trend" dataKey="value" color="hsl(var(--chart-2))" />}
+                        {msg.salesChartData && <LineChartCard data={msg.salesChartData} title="Sales Trend" dataKey="value" color="hsl(var(--chart-3))" />}
+                        {msg.transactionsChartData && <LineChartCard data={msg.transactionsChartData} title="Transactions Trend" dataKey="value" color="hsl(var(--chart-4))" />}
+                        {msg.assetsChartData && <LineChartCard data={msg.assetsChartData} title="Assets Trend" dataKey="value" color="hsl(var(--chart-5))" />}
+                        {msg.tradersChartData && <LineChartCard data={msg.tradersChartData} title="Traders Trend" dataKey="value" color="hsl(var(--chart-1))" />}
+                        {msg.buyersChartData && <LineChartCard data={msg.buyersChartData} title="Buyers Trend" dataKey="value" color="hsl(var(--chart-2))" />}
+                        {msg.sellersChartData && <LineChartCard data={msg.sellersChartData} title="Sellers Trend" dataKey="value" color="hsl(var(--chart-3))" />}
+                        {msg.holdersChartData && <LineChartCard data={msg.holdersChartData} title="Holders Trend" dataKey="value" color="hsl(var(--chart-4))" />}
+                        {msg.whalesChartData && <LineChartCard data={msg.whalesChartData} title="Whales Trend" dataKey="value" color="hsl(var(--chart-5))" />}
+                      </div>
                     )}
                   </div>
                   {msg.role === "user" && (
