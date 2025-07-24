@@ -5,7 +5,7 @@ import DynamicBackground from '@/components/dynamic-background'
 
 export const metadata: Metadata = {
   title: 'fin3crunch',
-  description: 'Tactical command and control system',
+  description: 'complete web3 metrics AI',
   icons: {
     icon: '/favicon.png',
   },
