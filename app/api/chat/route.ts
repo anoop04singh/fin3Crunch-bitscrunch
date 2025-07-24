@@ -108,8 +108,8 @@ const API_ENDPOINTS = {
       "Provides an estimated price for liquifying or selling a specific NFT.Retrieve the predicted price details for a specific NFT within the requested collection.The response includes:rarity sales: Metrics related to the NFT's rarity and its impact on predicted sales.collection drivers: Key factors influencing the collection's value.additional metrics: Other relevant data points supporting the price prediction.This information provides insights into the predicted market value of the NFT based on rarity, collection trends, and key metrics.",
   },
   "wallet-analytics": {
-    url: "https://api.unleashnfts.com/api/v2/nft/wallet/analytics",
-    params: ["blockchain", "wallet_address", "time_range"],
+    url: "https://api.unleashnfts.com/api/v2/nft/wallet/analytics?sort_by=timestamp",
+    params: ["blockchain", "wallet_address", "time_range", "sort_by"],
     description:
       "Offers analytics data for a specific wallet's NFT holdings, including total value and number of NFTs.This information provides a comprehensive view of the wallets activity, asset growth, and performance trends, helping users understand its financial dynamics within the blockchain network.",
   },
