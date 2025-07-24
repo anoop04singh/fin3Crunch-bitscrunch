@@ -627,7 +627,7 @@ async function callBitsCrunchAPI(endpoint: string, params: Record<string, string
 
   const url = new URL(config.url)
   Object.entries(params).forEach(([key, value]) => {
-    if (value) url.searchParams.append(key, value)
+    if (value) url.searchParams.set(key, value)
   })
 
   console.log(`Calling BitsCrunch API URL: ${url.toString()}`)
