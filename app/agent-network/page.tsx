@@ -183,13 +183,13 @@ export default function AgentNetworkPage() {
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col font-sans">
       {chatActive ? (
         <div className="flex-1 flex flex-col min-h-0 animate-fade-in">
           <div className="flex items-center justify-between p-4 border-b border-neutral-800">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-teal-200" />
-              fin3Crunch AI Chat
+            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-teal-300" />
+              fin3Crunch AI
             </h2>
             <Button
               variant="ghost"
@@ -197,11 +197,11 @@ export default function AgentNetworkPage() {
               onClick={() => setChatActive(false)}
               className="text-neutral-400 hover:text-white"
             >
-              <ChevronDown className="w-5 h-5 mr-2" />
+              <ChevronDown className="w-5 h-5 mr-1" />
               Minimize
             </Button>
           </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
             {messages.map((msg, index) => (
               <div
                 key={index}
@@ -216,14 +216,14 @@ export default function AgentNetworkPage() {
                   className={cn(
                     "max-w-[85%] rounded-xl shadow",
                     msg.role === "user"
-                      ? "bg-teal-200 text-zinc-900 rounded-br-none"
-                      : "bg-neutral-800 text-neutral-200 rounded-bl-none",
+                      ? "bg-teal-500/10 text-teal-100 border border-teal-500/20 rounded-br-none"
+                      : "bg-neutral-900/50 text-neutral-300 rounded-bl-none",
                   )}
                 >
                   {msg.role === "user" ? (
                     <p className="text-sm leading-relaxed p-3">{msg.content}</p>
                   ) : (
-                    <div className="space-y-2 p-3">
+                    <div className="space-y-3 p-3">
                       <MarkdownRenderer content={msg.content} />
                       {msg.recommendation && <RecommendationCard recommendation={msg.recommendation} />}
                       {msg.data?.metrics && <MetricsCard metrics={msg.data.metrics} />}
@@ -242,15 +242,15 @@ export default function AgentNetworkPage() {
                   )}
                 </div>
                 {msg.role === "user" && (
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-neutral-700 flex items-center justify-center text-neutral-200">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center text-neutral-200">
                     <Users className="w-4 h-4" />
                   </div>
                 )}
               </div>
             ))}
             {isLoading && <div className="flex items-center justify-center py-4">
-              <Loader2 className="h-6 w-6 animate-spin text-teal-100" />
-              <span className="ml-2 text-neutral-400">fin3Crunch AI is thinking...</span>
+              <Loader2 className="h-6 w-6 animate-spin text-teal-300" />
+              <span className="ml-3 text-neutral-400">fin3Crunch AI is thinking...</span>
             </div>}
             {error && <div className="text-red-500 text-center py-4">Error: {error}</div>}
             <div ref={messagesEndRef} />
@@ -264,7 +264,7 @@ export default function AgentNetworkPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => handleSuggestionClick(s)}
-                    className="border-teal-200/50 text-teal-200 hover:bg-teal-200 hover:text-zinc-900 transition-colors text-xs"
+                    className="border-neutral-700 bg-neutral-800/50 text-neutral-300 hover:bg-neutral-700 hover:text-white transition-colors text-xs"
                   >
                     {s}
                   </Button>
@@ -277,14 +277,14 @@ export default function AgentNetworkPage() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && !isLoading && handleSendMessage(input)}
-                className="flex-1 bg-neutral-800 border-neutral-600 text-white placeholder-neutral-400 h-11"
+                className="flex-1 bg-neutral-900 border-neutral-700 text-white placeholder-neutral-400 h-11 focus:ring-2 focus:ring-teal-500"
                 disabled={isLoading}
                 autoFocus
               />
               <Button
                 onClick={() => handleSendMessage(input)}
                 disabled={isLoading || !input.trim()}
-                className="bg-teal-200 hover:bg-teal-100 text-zinc-900 h-11 w-11"
+                className="bg-teal-500 hover:bg-teal-600 text-white h-11 w-11"
                 size="icon"
               >
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
@@ -296,7 +296,7 @@ export default function AgentNetworkPage() {
         <div className="h-full flex flex-col">
           <div className="flex-1 overflow-y-auto custom-scrollbar">
             <div className="p-6">
-              <h1 className="text-3xl font-bold text-white tracking-wider">fin3Crunch AI</h1>
+              <h1 className="text-3xl font-bold text-white">fin3Crunch AI</h1>
               <p className="text-base text-neutral-400 mt-1">Your intelligent Web3 analytics companion</p>
             </div>
             <MarketMetrics analytics={marketAnalytics} summary={marketSummary} loading={isLoading && marketAnalytics === null} />

@@ -18,7 +18,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className="text-white font-mono antialiased">
+      <body className="text-white antialiased">
         <DynamicBackground>
           <Providers>{children}</Providers>
         </DynamicBackground>
