@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'fin3crunch',
   description: 'complete web3 metrics AI',
   icons: {
-    icon: 'favicon.png',
+    icon: '/favicon.png',
   },
 }
 
