@@ -6,6 +6,9 @@ import DynamicBackground from '@/components/dynamic-background'
 export const metadata: Metadata = {
   title: 'fin3crunch',
   description: 'Tactical command and control system',
+  icons: {
+    icon: '/favicon.png',
+  },
 }
 
 export default function RootLayout({
