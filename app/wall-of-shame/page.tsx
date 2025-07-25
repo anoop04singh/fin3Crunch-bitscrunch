@@ -9,7 +9,7 @@ import { sleep } from "@/lib/utils"
 interface WashTradedCollection {
   collection_name: string
   contract_address: string
-  washtrade_volume_usd: number
+  washtrade_volume: number
   washtrade_assets: number
   washtrade_percentage: number
 }
@@ -18,7 +18,7 @@ interface WashTradedNft {
   collection_name: string
   token_id: string
   image_url?: string
-  washtrade_volume_usd: number
+  washtrade_volume: number
   washtrade_transactions: number
   contract_address: string
 }
@@ -76,12 +76,12 @@ export default function WallOfShamePage() {
       try {
         const [collectionsData, nftsData] = await Promise.all([
           fetchApiData("/nft/collection/washtrade", {
-            sort_by: "washtrade_volume_usd",
+            sort_by: "washtrade_volume",
             sort_order: "desc",
             limit: 10,
           }),
           fetchApiData("/nft/washtrade", {
-            sort_by: "washtrade_volume_usd",
+            sort_by: "washtrade_volume",
             sort_order: "desc",
             limit: 10,
           }),
@@ -163,7 +163,7 @@ export default function WallOfShamePage() {
                     </div>
                     <div className="text-right flex-shrink-0">
                       <p className="text-lg font-bold text-red-400 font-mono">
-                        {formatCurrency(collection.washtrade_volume_usd)}
+                        {formatCurrency(collection.washtrade_volume)}
                       </p>
                       <p className="text-xs text-neutral-400">{collection.washtrade_assets} assets</p>
                     </div>
@@ -196,7 +196,7 @@ export default function WallOfShamePage() {
                     </div>
                     <div className="text-right flex-shrink-0">
                       <p className="text-lg font-bold text-red-400 font-mono">
-                        {formatCurrency(nft.washtrade_volume_usd)}
+                        {formatCurrency(nft.washtrade_volume)}
                       </p>
                       <p className="text-xs text-neutral-400">{nft.washtrade_transactions} transactions</p>
                     </div>
