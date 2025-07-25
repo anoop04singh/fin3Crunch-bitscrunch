@@ -16,13 +16,14 @@ import {
   Gem,
   Fish,
   BarChart4,
+  ArrowLeftRight,
 } from "lucide-react"
-import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Bar, BarChart } from "recharts"
+import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { XCircle } from "lucide-react"
 import { sleep } from "@/lib/utils"
 
-// Interfaces
+// Interfaces based on API Documentation
 interface NftMetadata {
   collection_name: string
   description: string
@@ -38,21 +39,15 @@ interface CollectionMetadata {
   description: string
   image_url: string
   contract_address: string
-  total_supply: number
+  distinct_nft_count: number
   blockchain: string
 }
 
 interface CollectionAnalytics {
-  volume_usd: number
-  volume_change_percentage: number
-  floor_price_usd: number
-  transaction_count: number
-  unique_buyers: number
-  unique_sellers: number
+  volume: number
   sales: number
-  sales_change: number
-  assets: number
-  assets_change: number
+  transactions: number
+  floor_price_usd: number
   block_dates: string
   volume_trend: string
   sales_trend: string
@@ -61,29 +56,26 @@ interface CollectionAnalytics {
 }
 
 interface NftPriceEstimate {
-  estimated_price_usd: number
+  price_estimate: number
   price_estimate_lower_bound: number
   price_estimate_upper_bound: number
-  prediction_percentile: number
 }
 
 interface NftScores {
   rarity_score: number
-  liquidity_score: number
-  popularity_score: number
-  market_sentiment_score: number
+  price_ceiling: number
 }
 
 interface CollectionScores {
-  marketcap_usd: number
-  liquidity_score: number
-  popularity_score: number
-  market_sentiment_score: number
-  trending_status: string
+  marketcap: number
+  price_avg: number
+  price_ceiling: number
 }
 
 interface CollectionWhales {
-  whale_count: number
+  whale_holders: number
+  unique_buy_wallets: number
+  unique_sell_wallets: number
   top_whales: Array<{ wallet_address: string; nft_count: number }>
 }
 
@@ -200,16 +192,16 @@ export default function DetailedReportsPage() {
     try {
       const promises = [
         fetchApiData("/nft/collection/metadata", { contract_address: contractAddress }),
-        fetchApiData("/nft/collection/analytics", { contract_address: contractAddress, time_range: "30d" }),
-        fetchApiData("/nft/collection/scores", { contract_address: contractAddress }),
-        fetchApiData("/nft/collection/whales", { contract_address: contractAddress }),
+        fetchApiData("/nft/collection/analytics", { contract_address: contractAddress, time_range: "30d", sort_by: "sales" }),
+        fetchApiData("/nft/collection/scores", { contract_address: contractAddress, time_range: "30d", sort_by: "marketcap" }),
+        fetchApiData("/nft/collection/whales", { contract_address: contractAddress, time_range: "30d", sort_by: "nft_count" }),
       ]
 
       if (isSpecificNft) {
         promises.push(
           fetchApiData("/nft/metadata", { contract_address: contractAddress, token_id: inputNftTokenId }),
           fetchApiData("/nft/liquify/price_estimate", { contract_address: contractAddress, token_id: inputNftTokenId }),
-          fetchApiData("/nft/scores", { contract_address: contractAddress, token_id: inputNftTokenId }),
+          fetchApiData("/nft/scores", { contract_address: contractAddress, token_id: inputNftTokenId, sort_by: "price_ceiling" }),
         )
       }
 
@@ -226,78 +218,23 @@ export default function DetailedReportsPage() {
         nftScoresRes,
       ] = results
 
-      let collectionMetadata =
+      const collectionMetadata =
         collectionMetadataRes.status === "fulfilled" ? collectionMetadataRes.value?.[0] : null
-      console.log("Collection Metadata:", collectionMetadata)
-
-      let collectionAnalytics =
+      const collectionAnalytics =
         collectionAnalyticsRes.status === "fulfilled" ? collectionAnalyticsRes.value?.[0] : null
-      console.log("Collection Analytics:", collectionAnalytics)
-
-      let collectionScores = collectionScoresRes.status === "fulfilled" ? collectionScoresRes.value?.[0] : null
-      console.log("Collection Scores:", collectionScores)
-
-      let collectionWhales = collectionWhalesRes.status === "fulfilled" ? collectionWhalesRes.value?.[0] : null
-      console.log("Collection Whales:", collectionWhales)
-
-      let nftMetadata = isSpecificNft && nftMetadataRes?.status === "fulfilled" ? nftMetadataRes.value?.[0] : null
-      if (isSpecificNft) console.log("NFT Metadata:", nftMetadata)
-
-      let nftPriceEstimate =
+      const collectionScores = collectionScoresRes.status === "fulfilled" ? collectionScoresRes.value?.[0] : null
+      const collectionWhales = collectionWhalesRes.status === "fulfilled" ? collectionWhalesRes.value?.[0] : null
+      const nftMetadata = isSpecificNft && nftMetadataRes?.status === "fulfilled" ? nftMetadataRes.value?.[0] : null
+      const nftPriceEstimate =
         isSpecificNft && nftPriceEstimateRes?.status === "fulfilled" ? nftPriceEstimateRes.value?.[0] : null
-      if (isSpecificNft) console.log("NFT Price Estimate:", nftPriceEstimate)
-
-      let nftScores = isSpecificNft && nftScoresRes?.status === "fulfilled" ? nftScoresRes.value?.[0] : null
-      if (isSpecificNft) console.log("NFT Scores:", nftScores)
+      const nftScores = isSpecificNft && nftScoresRes?.status === "fulfilled" ? nftScoresRes.value?.[0] : null
 
       if (!collectionMetadata && !nftMetadata) {
         throw new Error("Could not fetch essential metadata for the contract address.")
       }
 
-      // --- MOCK DATA FALLBACKS ---
-      if (isSpecificNft && !nftPriceEstimate) {
-        nftPriceEstimate = {
-          estimated_price_usd: 59800.5,
-          price_estimate_lower_bound: 55100.0,
-          price_estimate_upper_bound: 64500.0,
-          prediction_percentile: 0.85,
-        }
-        console.log("Using mock NFT Price Estimate data.")
-      }
-      if (isSpecificNft && !nftScores) {
-        nftScores = {
-          rarity_score: 85.23,
-          liquidity_score: 92.1,
-          popularity_score: 88.5,
-          market_sentiment_score: 75.0,
-        }
-        console.log("Using mock NFT Scores data.")
-      }
-      if (!collectionScores) {
-        collectionScores = {
-          marketcap_usd: 123456789,
-          liquidity_score: 89.5,
-          popularity_score: 91.2,
-          market_sentiment_score: 80.3,
-          trending_status: "Hot",
-        }
-        console.log("Using mock Collection Scores data.")
-      }
-      if (!collectionWhales) {
-        collectionWhales = {
-          whale_count: 42,
-          top_whales: [
-            { wallet_address: "0x123...abc", nft_count: 150 },
-            { wallet_address: "0x456...def", nft_count: 125 },
-            { wallet_address: "0x789...ghi", nft_count: 110 },
-          ],
-        }
-        console.log("Using mock Collection Whales data.")
-      }
-      // --- END MOCK DATA ---
-
       const floorPrice = collectionAnalytics?.floor_price_usd
-      const estimatedPrice = nftPriceEstimate?.estimated_price_usd
+      const estimatedPrice = nftPriceEstimate?.price_estimate
       const floorVsEstimateDiffPercent =
         floorPrice && estimatedPrice ? ((estimatedPrice - floorPrice) / floorPrice) * 100 : undefined
       const recommendation = getRecommendation(estimatedPrice, floorPrice)
@@ -448,9 +385,10 @@ export default function DetailedReportsPage() {
                 {reportData.collectionMetadata?.contract_address}
               </p>
               <p className="text-sm text-neutral-400 mt-3 leading-relaxed">
-                {reportData.isSpecificNft
-                  ? reportData.nftMetadata?.description?.substring(0, 150)
-                  : reportData.collectionMetadata?.description?.substring(0, 150)}
+                {(reportData.isSpecificNft
+                  ? reportData.nftMetadata?.description
+                  : reportData.collectionMetadata?.description
+                )?.substring(0, 150) || "No description available."}
                 ...
               </p>
             </Card>
@@ -473,7 +411,7 @@ export default function DetailedReportsPage() {
                       <div className="flex justify-between items-baseline">
                         <span className="text-neutral-400 text-sm">Est. Token Price</span>
                         <span className="text-2xl font-bold text-teal-400 font-mono">
-                          ${reportData.nftPriceEstimate?.estimated_price_usd?.toFixed(2) ?? "N/A"}
+                          ${reportData.nftPriceEstimate?.price_estimate?.toFixed(2) ?? "N/A"}
                         </span>
                       </div>
                       <div className="text-xs text-neutral-500 text-right">
@@ -505,38 +443,33 @@ export default function DetailedReportsPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {reportData.isSpecificNft && reportData.nftScores && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-neutral-400">Rarity Score</span>
-                      <span className="text-white font-mono">
-                        {reportData.nftScores?.rarity_score?.toFixed(2) ?? "N/A"}
-                      </span>
-                    </div>
+                  {reportData.isSpecificNft ? (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-neutral-400">Rarity Score</span>
+                        <span className="text-white font-mono">{reportData.nftScores?.rarity_score?.toFixed(2) ?? "N/A"}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-neutral-400">Price Ceiling</span>
+                        <span className="text-white font-mono">${reportData.nftScores?.price_ceiling?.toFixed(2) ?? "N/A"}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-neutral-400">Market Cap</span>
+                        <span className="text-white font-mono">${reportData.collectionScores?.marketcap?.toLocaleString() ?? "N/A"}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-neutral-400">Average Price</span>
+                        <span className="text-white font-mono">${reportData.collectionScores?.price_avg?.toFixed(2) ?? "N/A"}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-neutral-400">Price Ceiling</span>
+                        <span className="text-white font-mono">${reportData.collectionScores?.price_ceiling?.toFixed(2) ?? "N/A"}</span>
+                      </div>
+                    </>
                   )}
-                  <div className="flex justify-between text-sm">
-                    <span className="text-neutral-400">Popularity Score</span>
-                    <span className="text-white font-mono">
-                      {reportData.isSpecificNft
-                        ? reportData.nftScores?.popularity_score?.toFixed(2) ?? "N/A"
-                        : reportData.collectionScores?.popularity_score?.toFixed(2) ?? "N/A"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-neutral-400">Liquidity Score</span>
-                    <span className="text-white font-mono">
-                      {reportData.isSpecificNft
-                        ? reportData.nftScores?.liquidity_score?.toFixed(2) ?? "N/A"
-                        : reportData.collectionScores?.liquidity_score?.toFixed(2) ?? "N/A"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-neutral-400">Market Sentiment</span>
-                    <span className="text-white font-mono">
-                      {reportData.isSpecificNft
-                        ? reportData.nftScores?.market_sentiment_score?.toFixed(2) ?? "N/A"
-                        : reportData.collectionScores?.market_sentiment_score?.toFixed(2) ?? "N/A"}
-                    </span>
-                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -553,7 +486,7 @@ export default function DetailedReportsPage() {
               <div>
                 <p className="text-xs text-neutral-400">Volume</p>
                 <p className="text-xl font-bold text-white font-mono">
-                  ${(reportData.collectionAnalytics?.volume_usd ?? 0).toLocaleString()}
+                  ${(reportData.collectionAnalytics?.volume ?? 0).toLocaleString()}
                 </p>
               </div>
               <div>
@@ -565,13 +498,13 @@ export default function DetailedReportsPage() {
               <div>
                 <p className="text-xs text-neutral-400">Unique Buyers</p>
                 <p className="text-xl font-bold text-white font-mono">
-                  {(reportData.collectionAnalytics?.unique_buyers ?? 0).toLocaleString()}
+                  {(reportData.collectionWhales?.unique_buy_wallets ?? 0).toLocaleString()}
                 </p>
               </div>
               <div>
                 <p className="text-xs text-neutral-400">Unique Sellers</p>
                 <p className="text-xl font-bold text-white font-mono">
-                  {(reportData.collectionAnalytics?.unique_sellers ?? 0).toLocaleString()}
+                  {(reportData.collectionWhales?.unique_sell_wallets ?? 0).toLocaleString()}
                 </p>
               </div>
             </CardContent>
@@ -615,7 +548,7 @@ export default function DetailedReportsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold text-white mb-2">{reportData.collectionWhales?.whale_count ?? "N/A"}</p>
+                <p className="text-3xl font-bold text-white mb-2">{reportData.collectionWhales?.whale_holders ?? "N/A"}</p>
                 <p className="text-sm text-neutral-400 mb-4">Top Whales by Holdings:</p>
                 <div className="space-y-2">
                   {(reportData.collectionWhales?.top_whales || []).slice(0, 5).map((whale, i) => (
