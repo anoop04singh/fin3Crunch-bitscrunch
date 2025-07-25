@@ -4,151 +4,167 @@ import { GoogleGenerativeAI } from "@google/generative-ai"
 const BITSCRUNCH_API_KEY = process.env.BITSCRUNCH_API_KEY
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY
 
-// API endpoint configurations
+// API endpoint configurations based on the provided documentation
 const API_ENDPOINTS = {
-  "nft-top-deals": {
-    url: "https://api.unleashnfts.com/api/v2/nft/top_deals?sort_by=deal_score",
-    params: ["sort_by", "sort_order", "offset", "limit"],
-    description: "Get top NFT deals based on various sorting criteria.",
-  },
-  "nft-scores": {
-    url: "https://api.unleashnfts.com/api/v2/nft/scores?sort_by=rarity_score",
-    params: ["blockchain", "time_range", "sort_by", "sort_order", "offset", "limit"],
-    description: "Get detailed metrics about scores for a specific NFT, including rarity and trending status.",
-  },
-  "token-historical-price": {
-    url: "https://api.unleashnfts.com/api/v2/token/historical_price",
-    params: ["blockchain", "token_address", "time_range", "offset", "limit"],
-    description: "Get ERC20 token historical price in USD.",
+  // Token Endpoints
+  "token-balance": {
+    url: "https://api.unleashnfts.com/api/v2/token/balance",
+    params: ["blockchain", "token_address"],
+    description: "Get the token balances for a specific wallet address.",
   },
   "token-metrics": {
     url: "https://api.unleashnfts.com/api/v2/token/metrics",
-    params: ["blockchain", "token_address", "offset", "limit"],
-    description:
-      "Retrieve key metrics and metadata for a specified token, offering insights into its market performance, liquidity, and activity.",
+    params: ["blockchain", "token_address"],
+    description: "Retrieve key metrics and metadata for a specific token.",
   },
   "token-price-prediction": {
     url: "https://api.unleashnfts.com/api/v2/token/price_prediction",
-    params: ["token_address", "offset", "limit"],
-    description: "Retrieve a token price prediction with key market indicators and volatility trends.",
+    params: ["token_address"],
+    description: "Get a future price prediction for a token.",
   },
-  "market-insights-holders": {
-    url: "https://api.unleashnfts.com/api/v2/nft/market-insights/holders",
-    params: ["blockchain", "time_range"],
-    description:
-      "Retrieves holder metrics for the NFT market, such as total holders and their distribution across specified blockchains and time ranges.",
+  "token-dex-price": {
+    url: "https://api.unleashnfts.com/api/v2/token/dex_price",
+    params: ["blockchain", "token_address", "time_range"],
+    description: "Get the current USD price of an ERC-20 token from DEXs.",
   },
-  "market-insights-analytics": {
-    url: "https://api.unleashnfts.com/api/v2/nft/market-insights/analytics",
-    params: ["blockchain", "time_range"],
-    description:
-      "Provides analytics metrics for the NFT market, including market capitalization, trading volume, and number of sales over specified time periods.",
+  "token-historical-price": {
+    url: "https://api.unleashnfts.com/api/v2/token/historical_price",
+    params: ["blockchain", "token_address", "time_range"],
+    description: "Retrieve the historical USD price of an ERC-20 token.",
   },
-  "market-insights-traders": {
-    url: "https://api.unleashnfts.com/api/v2/nft/market-insights/traders",
-    params: ["blockchain", "time_range"],
-    description: "Gets aggregated values and trends for trader metrics in the NFT market.",
+  // Wallet Endpoints
+  "wallet-balance-nft": {
+    url: "https://api.unleashnfts.com/api/v2/wallet/balance/nft",
+    params: ["wallet", "blockchain"],
+    description: "Get a comprehensive overview of a wallet's NFT holdings.",
   },
-  "marketplace-metadata": {
-    url: "https://api.unleashnfts.com/api/v2/nft/marketplace/metadata",
-    params: [],
-    description:
-      "Retrieve metadata for all available marketplaces, providing comprehensive details about each marketplace.",
+  "wallet-balance-token": {
+    url: "https://api.unleashnfts.com/api/v2/wallet/balance/token",
+    params: ["address", "blockchain"],
+    description: "Get a comprehensive overview of a wallet's ERC-20 token holdings.",
   },
+  "wallet-score": {
+    url: "https://api.unleashnfts.com/api/v2/wallet/score",
+    params: ["wallet_address"],
+    description: "Assess a wallet's activity, risk profile, and interaction patterns.",
+  },
+  "wallet-metrics": {
+    url: "https://api.unleashnfts.com/api/v2/wallet/metrics",
+    params: ["blockchain", "wallet"],
+    description: "Get a wallet's transactional activity, including volume, inflow/outflow, and age.",
+  },
+  // NFT Endpoints
+  "nft-metadata": {
+    url: "https://api.unleashnfts.com/api/v2/nft/metadata",
+    params: ["blockchain", "contract_address", "token_id"],
+    description: "Retrieve the metadata for a specific NFT.",
+  },
+  "nft-analytics": {
+    url: "https://api.unleashnfts.com/api/v2/nft/analytics",
+    params: ["contract_address", "token_id", "blockchain", "sort_by"],
+    description: "Get detailed analytics for a specific NFT. `sort_by` is required, defaults to 'sales'.",
+  },
+  "nft-scores": {
+    url: "https://api.unleashnfts.com/api/v2/nft/scores",
+    params: ["contract_address", "token_id", "blockchain", "sort_by"],
+    description: "Get performance scores for a specific NFT. `sort_by` is required, defaults to 'price_ceiling'.",
+  },
+  "nft-washtrade": {
+    url: "https://api.unleashnfts.com/api/v2/nft/washtrade",
+    params: ["contract_address", "token_id", "blockchain", "sort_by"],
+    description: "Detect and analyze wash trading for a specific NFT. `sort_by` is required, defaults to 'washtrade_volume'.",
+  },
+  "nft-top-deals": {
+    url: "https://api.unleashnfts.com/api/v2/nft/top_deals",
+    params: ["sort_by"],
+    description: "Discover the best current deals for NFTs. `sort_by` is required, defaults to 'deal_score'.",
+  },
+  "nft-price-estimate": {
+    url: "https://api.unleashnfts.com/api/v2/nft/liquify/price_estimate",
+    params: ["blockchain", "contract_address", "token_id"],
+    description: "Get a predicted price for a specific NFT.",
+  },
+  // NFT Collection Endpoints
   "collection-metadata": {
     url: "https://api.unleashnfts.com/api/v2/nft/collection/metadata",
-    params: ["blockchain", "contract_address"],
-    description: "Retrieves metadata for a specific NFT collection, such as name, symbol, and total supply.",
+    params: ["blockchain", "slug_name", "contract_address"],
+    description: "Retrieve metadata for an entire NFT collection.",
+  },
+  "collection-owner": {
+    url: "https://api.unleashnfts.com/api/v2/nft/collection/owner",
+    params: ["blockchain", "contract_address", "sort_by"],
+    description: "Get a list of all NFT holders for a collection. `sort_by` is required, defaults to 'acquired_date'.",
   },
   "collection-analytics": {
-    url: "https://api.unleashnfts.com/api/v2/nft/collection/analytics?sort_by=volume",
-    params: ["blockchain", "contract_address", "time_range"],
-    description:
-      "Delivers detailed metrics and trend data for a specific NFT collection, including sales volume, transaction count, and floor price over time.",
+    url: "https://api.unleashnfts.com/api/v2/nft/collection/analytics",
+    params: ["blockchain", "contract_address", "time_range", "sort_by"],
+    description: "Get detailed analytics for a collection. `sort_by` is required, defaults to 'sales'.",
+  },
+  "collection-holders": {
+    url: "https://api.unleashnfts.com/api/v2/nft/collection/holders",
+    params: ["blockchain", "contract_address", "time_range", "sort_by"],
+    description: "Get detailed holder metrics for a collection. `sort_by` is required, defaults to 'holders'.",
   },
   "collection-scores": {
     url: "https://api.unleashnfts.com/api/v2/nft/collection/scores",
-    params: ["blockchain", "contract_address"],
-    description:
-      "The score typically refers to various performance indicators or rankings used to assess the collection's performance in terms of:trading: Metrics related to trading activity and volume.popularity: Indicators of the collection's popularity and engagement.other factors: Such as rarity, liquidity, and additional performance aspects.The response allows users to monitor the collection's market activity, user engagement, and overall success within the ecosystem.",
+    params: ["blockchain", "contract_address", "time_range", "sort_by"],
+    description: "Get performance scores for a collection. `sort_by` is required, defaults to 'marketcap'.",
   },
-  "collection-holders": {
-    url: "https://api.unleashnfts.com/api/v2/nft/collection/holders?sort_by=balance",
-    params: ["blockchain", "contract_address", "limit", "offset", "sort_by"],
-    description:
-      "Get detailed information about the holders of a specific collection, identified by its contract address and chain ID.The response includes:holder distribution metrics: Data on the distribution of tokens across holders.holder count changes: Metrics that track changes in the number of holders.ownership trends: Trends in ownership over time.",
-  },
-  "collection-traders": {
-    url: "https://api.unleashnfts.com/api/v2/nft/collection/traders?sort_by=volume_usd",
-    params: ["blockchain", "contract_address", "time_range", "limit", "offset", "sort_by"],
-    description:
-      "Get detailed insights into the traders associated with a collection, identified by its contract address and chain ID.The response includes:unique trader metrics: Data on the number of unique traders involved with the collection.sellers and buyers: Metrics tracking the number of sellers and buyers over time.trading trends: Trends that show how actively the collection is being traded and how trader behavior evolves.This information provides valuable insights into trading activity and trader behavior associated with the collection.",
+  "collection-washtrade": {
+    url: "https://api.unleashnfts.com/api/v2/nft/collection/washtrade",
+    params: ["blockchain", "contract_address", "time_range", "sort_by"],
+    description: "Analyze wash trading at the collection level. `sort_by` is required, defaults to 'washtrade_assets'.",
   },
   "collection-whales": {
-    url: "https://api.unleashnfts.com/api/v2/nft/collection/whales?sort_by=volume_usd",
-    params: ["blockchain", "contract_address", "threshold", "limit", "offset", "sort_by"],
-    description:
-      "Identifies large holders or significant traders in a specific NFT collection based on a specified threshold.This information provides valuable insights into the influence of large holders on the collection.",
+    url: "https://api.unleashnfts.com/api/v2/nft/collection/whales",
+    params: ["blockchain", "contract_address", "time_range", "sort_by"],
+    description: "Get insights into 'Whales' within a collection. `sort_by` is required, defaults to 'nft_count'.",
   },
   "collection-floor-price": {
     url: "https://api.unleashnfts.com/api/v2/nft/collection/floor-price",
     params: ["blockchain", "contract_address"],
-    description: "Retrieves the current floor price of the NFT collection.",
+    description: "Retrieves the current floor price of an NFT collection.",
   },
-  "liquify-collection-price-estimate": {
+  "collection-price-estimate": {
     url: "https://api.unleashnfts.com/api/v2/nft/liquify/collection/price_estimate",
     params: ["blockchain", "contract_address"],
-    description:
-      "Retrieve the predicted price details for the requested NFT collection and specific NFT. This information provides insights into the expected market performance of both the collection as a whole and the specified NFT.",
+    description: "Retrieve a predicted price for an entire NFT collection.",
   },
-  price_estimate: {
-    url: "https://api.unleashnfts.com/api/v2/nft/liquify/price_estimate",
-    params: ["blockchain", "contract_address", "token_id"],
-    description:
-      "Provides an estimated price for liquifying or selling a specific NFT.Retrieve the predicted price details for a specific NFT within the requested collection.The response includes:rarity sales: Metrics related to the NFT's rarity and its impact on predicted sales.collection drivers: Key factors influencing the collection's value.additional metrics: Other relevant data points supporting the price prediction.This information provides insights into the predicted market value of the NFT based on rarity, collection trends, and key metrics.",
+  // Market & Marketplace Endpoints
+  "market-insights-analytics": {
+    url: "https://api.unleashnfts.com/api/v2/nft/market-insights/analytics",
+    params: ["blockchain", "time_range"],
+    description: "Get aggregated analytics for the entire NFT market.",
   },
-  "wallet-analytics": {
-    url: "https://api.unleashnfts.com/api/v2/nft/wallet/analytics?sort_by=timestamp",
-    params: ["blockchain", "wallet_address", "time_range", "sort_by"],
-    description:
-      "Offers analytics data for a specific wallet's NFT holdings, including total value and number of NFTs.This information provides a comprehensive view of the wallets activity, asset growth, and performance trends, helping users understand its financial dynamics within the blockchain network.",
+  "market-insights-holders": {
+    url: "https://api.unleashnfts.com/api/v2/nft/market-insights/holders",
+    params: ["blockchain", "time_range"],
+    description: "Get aggregated holder metrics across the entire NFT market.",
   },
-  "wallet-scores": {
-    url: "https://api.unleashnfts.com/api/v2/nft/wallet/scores",
-    params: ["blockchain", "wallet_address"],
-    description: "Retrieves scores or rankings for a wallet's NFT activities, such as activity and diversity scores.",
+  "market-insights-traders": {
+    url: "https://api.unleashnfts.com/api/v2/nft/market-insights/traders",
+    params: ["blockchain", "time_range"],
+    description: "Get aggregated trader metrics across the entire NFT market.",
   },
-  "wallet-traders": {
-    url: "https://api.unleashnfts.com/api/v2/nft/wallet/traders",
-    params: ["blockchain", "wallet_address", "time_range", "limit", "offset", "sort_by"],
-    description: "Lists traders that the specified wallet has interacted with within a given time range.",
+  "market-insights-washtrade": {
+    url: "https://api.unleashnfts.com/api/v2/nft/market-insights/washtrade",
+    params: ["blockchain", "time_range"],
+    description: "Get aggregated wash trade metrics for the entire NFT market.",
   },
-  "wallet-balance-defi": {
-    url: "https://api.unleashnfts.com/api/v2/wallet/balance/defi",
-    params: ["blockchain", "wallet_address"],
-    description: "Retrieves DeFi-related balances for the specified wallet.",
+  "marketplace-analytics": {
+    url: "https://api.unleashnfts.com/api/v2/nft/marketplace/analytics",
+    params: ["blockchain", "time_range", "sort_by"],
+    description: "Get detailed analytics for a specific NFT marketplace. `sort_by` is required, defaults to 'volume'.",
   },
-  "wallet-balance-nft": {
-    url: "https://api.unleashnfts.com/api/v2/nft/wallet/balance/nft",
-    params: ["blockchain", "wallet_address", "limit", "offset"],
-    description: "Gets the NFT balances for the specified wallet, including collection details and token IDs.",
+  "marketplace-holders": {
+    url: "https://api.unleashnfts.com/api/v2/nft/marketplace/holders",
+    params: ["blockchain", "time_range", "sort_by"],
+    description: "Get holder metrics for a specific NFT marketplace. `sort_by` is required, defaults to 'holders'.",
   },
-  "wallet-metrics": {
-    url: "https://api.unleashnfts.com/api/v2/wallet/metrics",
-    params: ["blockchain", "wallet_address", "time_range"],
-    description:
-      "Provides various metrics for the wallet, such as total value of holdings and transaction history over a specified time range.",
-  },
-  "wallet-balance-token": {
-    url: "https://api.unleashnfts.com/api/v2/wallet/balance/token",
-    params: ["blockchain", "wallet_address", "limit", "offset"],
-    description: "Retrieves token balances for the specified wallet.",
-  },
-  "nft-transactions": {
-    url: "https://api.unleashnfts.com/api/v2/nft/transactions?sort_by=timestamp",
-    params: ["blockchain", "contract_address", "wallet_address", "type", "limit", "offset", "sort_by"],
-    description:
-      "Fetches transaction history for NFTs, filterable by collection, wallet, and transaction type, with pagination.",
+  "marketplace-traders": {
+    url: "https://api.unleashnfts.com/api/v2/nft/marketplace/traders",
+    params: ["blockchain", "time_range", "sort_by"],
+    description: "Get trader metrics for a specific NFT marketplace. `sort_by` is required, defaults to 'traders'.",
   },
 }
 
@@ -785,9 +801,7 @@ export async function POST(req: NextRequest) {
 
     const systemPrompt = `You are an expert Web3 financial advisor and analytics assistant named "fin3Crunch AI". You have access to BitsCrunch APIs for comprehensive NFT/WEB3 data analysis.
 
-Available endpoints: ${Object.keys(API_ENDPOINTS).join(", ")}
-Supported blockchains: ${SUPPORTED_BLOCKCHAINS.slice(0, 10).join(", ")}... and more
-Time ranges: ${TIME_RANGES.join(", ")}
+You have been provided with comprehensive API documentation. You must analyze it to select the most appropriate endpoints and parameters for the user's query. Pay close attention to required parameters like \`sort_by\` and use the documented default values if the user does not specify a sorting preference. When a user asks about suspicious activity or wash trading, you must use the \`nft-washtrade\` or \`collection-washtrade\` endpoints. For any endpoint that returns trend data (e.g., \`sales_trend\`, \`volume_trend\`, \`washtrade_assets_trend\`), you must process this data to be displayed as a chart.
 
 IMPORTANT PARAMETER RULES:
 - Always use blockchain names as strings (e.g., "ethereum", "polygon", "avalanche")
