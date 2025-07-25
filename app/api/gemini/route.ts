@@ -54,6 +54,11 @@ export async function POST(req: NextRequest) {
         `
       break
     case "market_analytics_summary":
+      const formatChange = (change: any) => {
+        const num = parseFloat(change)
+        if (isNaN(num)) return "N/A"
+        return `${(num * 100).toFixed(2)}%`
+      }
       prompt = `As a financial advisor, analyze the following 24-hour NFT market analytics data. Provide a concise market summary and an analysis of the market sentiment.
       - IMPORTANT: The entire response must be very concise, limited to a maximum of 3-4 lines.
       - Base your sentiment (bullish, bearish, neutral) on the change percentages (e.g., volume_change, sales_change).
@@ -61,9 +66,9 @@ export async function POST(req: NextRequest) {
       - Keep the tone professional and insightful.
       
       Data:
-      - Total Volume (USD): ${reportData.volume?.toFixed(2)} (Change: ${(reportData.volume_change * 100).toFixed(2)}%)
-      - Total Sales: ${reportData.sales} (Change: ${(reportData.sales_change * 100).toFixed(2)}%)
-      - Total Transactions: ${reportData.transactions} (Change: ${(reportData.transactions_change * 100).toFixed(2)}%)
+      - Total Volume (USD): ${reportData.volume?.toFixed(2) ?? "N/A"} (Change: ${formatChange(reportData.volume_change)})
+      - Total Sales: ${reportData.sales ?? "N/A"} (Change: ${formatChange(reportData.sales_change)})
+      - Total Transactions: ${reportData.transactions ?? "N/A"} (Change: ${formatChange(reportData.transactions_change)})
       `
       break
     default:

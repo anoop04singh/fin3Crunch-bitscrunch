@@ -579,12 +579,14 @@ export default function DetailedReportsPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto">
-                  {(reportData.nftMetadata.attributes || []).map((attr, i) => (
-                    <div key={i} className="bg-neutral-800/50 p-2 rounded text-center">
-                      <p className="text-xs text-neutral-400 uppercase">{attr.trait_type}</p>
-                      <p className="text-sm font-semibold text-white">{attr.value}</p>
-                    </div>
-                  ))}
+                  {(Array.isArray(reportData.nftMetadata.attributes) ? reportData.nftMetadata.attributes : []).map(
+                    (attr, i) => (
+                      <div key={i} className="bg-neutral-800/50 p-2 rounded text-center">
+                        <p className="text-xs text-neutral-400 uppercase">{attr.trait_type}</p>
+                        <p className="text-sm font-semibold text-white">{attr.value}</p>
+                      </div>
+                    ),
+                  )}
                 </CardContent>
               </Card>
             )}
