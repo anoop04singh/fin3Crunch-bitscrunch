@@ -501,19 +501,19 @@ export default function DetailedReportsPage() {
               <div>
                 <p className="text-xs text-neutral-400">Sales</p>
                 <p className="text-xl font-bold text-white font-mono">
-                  {reportData.collectionAnalytics?.sales.toLocaleString() ?? "N/A"}
+                  {(reportData.collectionAnalytics?.sales ?? 0).toLocaleString()}
                 </p>
               </div>
               <div>
                 <p className="text-xs text-neutral-400">Unique Buyers</p>
                 <p className="text-xl font-bold text-white font-mono">
-                  {reportData.collectionAnalytics?.unique_buyers.toLocaleString() ?? "N/A"}
+                  {(reportData.collectionAnalytics?.unique_buyers ?? 0).toLocaleString()}
                 </p>
               </div>
               <div>
                 <p className="text-xs text-neutral-400">Unique Sellers</p>
                 <p className="text-xl font-bold text-white font-mono">
-                  {reportData.collectionAnalytics?.unique_sellers.toLocaleString() ?? "N/A"}
+                  {(reportData.collectionAnalytics?.unique_sellers ?? 0).toLocaleString()}
                 </p>
               </div>
             </CardContent>
