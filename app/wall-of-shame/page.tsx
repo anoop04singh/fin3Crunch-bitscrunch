@@ -157,6 +157,7 @@ export default function WallOfShamePage() {
         data = await fetchApiData("/nft/collection/washtrade", {
           contract_address: item.contract_address,
           time_range: "24h",
+          sort_by: "washtrade_volume",
         })
         const trends = data?.[0] ? parseTrendData(data[0]) : []
         setDetailedData({ trends, metrics: data?.[0] })
@@ -165,6 +166,7 @@ export default function WallOfShamePage() {
         data = await fetchApiData("/nft/washtrade", {
           contract_address: item.contract_address,
           token_id: item.token_id,
+          sort_by: "washtrade_volume",
         })
         setDetailedData({ metrics: data?.[0] })
       }
