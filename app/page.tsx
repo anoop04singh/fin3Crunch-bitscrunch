@@ -2,13 +2,14 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import { ChevronRight, Monitor, Settings, Shield, Target, Users, Bell, RefreshCw } from "lucide-react"
+import { ChevronRight, Monitor, Settings, Shield, Target, Users, Bell, RefreshCw, ShieldOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import AgentNetworkPage from "./agent-network/page"
 import IntelligencePage from "./intelligence/page"
 import SystemsPage from "./systems/page"
 import DashboardPage from "./dashboard/page"
 import DetailedReportsPage from "./detailed-reports/page"
+import WallOfShamePage from "./wall-of-shame/page"
 
 export default function TacticalDashboard() {
   const [activeSection, setActiveSection] = useState("dashboard")
@@ -18,6 +19,7 @@ export default function TacticalDashboard() {
     dashboard: "DASHBOARD",
     agents: "fin3Crunch AI",
     reports: "DETAILED REPORTS",
+    shame: "WALL OF SHAME",
     intelligence: "INTELLIGENCE",
     systems: "SYSTEMS",
   }
@@ -26,6 +28,7 @@ export default function TacticalDashboard() {
     { id: "dashboard", icon: Monitor, label: "DASHBOARD" },
     { id: "agents", icon: Users, label: "fin3Crunch AI" },
     { id: "reports", icon: Target, label: "DETAILED REPORTS" },
+    { id: "shame", icon: ShieldOff, label: "WALL OF SHAME" },
     // { id: "intelligence", icon: Shield, label: "INTELLIGENCE" },
     // { id: "systems", icon: Settings, label: "SYSTEMS" },
   ]
@@ -104,6 +107,9 @@ export default function TacticalDashboard() {
           </div>
           <div className={activeSection === "reports" ? "block h-full" : "hidden"}>
             <DetailedReportsPage />
+          </div>
+          <div className={activeSection === "shame" ? "block h-full" : "hidden"}>
+            <WallOfShamePage />
           </div>
           <div className={activeSection === "intelligence" ? "block h-full" : "hidden"}>
             <IntelligencePage />
