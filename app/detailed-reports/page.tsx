@@ -150,12 +150,16 @@ export default function DetailedReportsPage() {
 
   const parseTrendData = (analytics: CollectionAnalytics): TrendData[] => {
     try {
-      const parse = (str: string) =>
-        str
+      const parse = (str: string | null | undefined) => {
+        if (!str || typeof str !== "string" || str.length <= 2) return []
+        return str
           .slice(1, -1)
           .split(",")
           .map((s) => s.replace(/"/g, "").trim())
+      }
       const dates = parse(analytics.block_dates)
+      if (dates.length === 0) return []
+
       const volumes = parse(analytics.volume_trend).map(Number)
       const sales = parse(analytics.sales_trend).map(Number)
       const transactions = parse(analytics.transactions_trend).map(Number)
@@ -560,7 +564,7 @@ export default function DetailedReportsPage() {
                 <p className="text-3xl font-bold text-white mb-2">{reportData.collectionWhales?.whale_count ?? "N/A"}</p>
                 <p className="text-sm text-neutral-400 mb-4">Top Whales by Holdings:</p>
                 <div className="space-y-2">
-                  {reportData.collectionWhales?.top_whales.slice(0, 5).map((whale, i) => (
+                  {(reportData.collectionWhales?.top_whales || []).slice(0, 5).map((whale, i) => (
                     <div key={i} className="flex justify-between text-xs bg-neutral-800/50 p-2 rounded">
                       <span className="text-neutral-300 font-mono">{whale.wallet_address}</span>
                       <span className="text-white font-bold">{whale.nft_count} NFTs</span>
@@ -577,7 +581,7 @@ export default function DetailedReportsPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto">
-                  {reportData.nftMetadata.attributes.map((attr, i) => (
+                  {(reportData.nftMetadata.attributes || []).map((attr, i) => (
                     <div key={i} className="bg-neutral-800/50 p-2 rounded text-center">
                       <p className="text-xs text-neutral-400 uppercase">{attr.trait_type}</p>
                       <p className="text-sm font-semibold text-white">{attr.value}</p>
