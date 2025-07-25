@@ -235,9 +235,17 @@ export default function DetailedReportsPage() {
 
       const floorPrice = collectionAnalytics?.floor_price_usd
       const estimatedPrice = nftPriceEstimate?.price_estimate
+
       const floorVsEstimateDiffPercent =
-        floorPrice && estimatedPrice ? ((estimatedPrice - floorPrice) / floorPrice) * 100 : undefined
-      const recommendation = getRecommendation(estimatedPrice, floorPrice)
+        floorPrice != null && estimatedPrice != null && Number(floorPrice) !== 0
+          ? ((Number(estimatedPrice) - Number(floorPrice)) / Number(floorPrice)) * 100
+          : undefined
+
+      const recommendation = getRecommendation(
+        estimatedPrice != null ? Number(estimatedPrice) : undefined,
+        floorPrice != null ? Number(floorPrice) : undefined,
+      )
+
       const collectionTrends = collectionAnalytics ? parseTrendData(collectionAnalytics) : []
 
       setReportData({
@@ -403,7 +411,10 @@ export default function DetailedReportsPage() {
                   <div className="flex justify-between items-baseline">
                     <span className="text-neutral-400 text-sm">Floor Price</span>
                     <span className="text-2xl font-bold text-white font-mono">
-                      ${reportData.collectionAnalytics?.floor_price_usd?.toFixed(2) ?? "N/A"}
+                      $
+                      {reportData.collectionAnalytics?.floor_price_usd != null
+                        ? Number(reportData.collectionAnalytics.floor_price_usd).toFixed(2)
+                        : "N/A"}
                     </span>
                   </div>
                   {reportData.isSpecificNft && (
@@ -411,12 +422,21 @@ export default function DetailedReportsPage() {
                       <div className="flex justify-between items-baseline">
                         <span className="text-neutral-400 text-sm">Est. Token Price</span>
                         <span className="text-2xl font-bold text-teal-400 font-mono">
-                          ${reportData.nftPriceEstimate?.price_estimate?.toFixed(2) ?? "N/A"}
+                          $
+                          {reportData.nftPriceEstimate?.price_estimate != null
+                            ? Number(reportData.nftPriceEstimate.price_estimate).toFixed(2)
+                            : "N/A"}
                         </span>
                       </div>
                       <div className="text-xs text-neutral-500 text-right">
-                        Range: ${reportData.nftPriceEstimate?.price_estimate_lower_bound?.toFixed(2) ?? "N/A"} - $
-                        {reportData.nftPriceEstimate?.price_estimate_upper_bound?.toFixed(2) ?? "N/A"}
+                        Range: $
+                        {reportData.nftPriceEstimate?.price_estimate_lower_bound != null
+                          ? Number(reportData.nftPriceEstimate.price_estimate_lower_bound).toFixed(2)
+                          : "N/A"}{" "}
+                        - $
+                        {reportData.nftPriceEstimate?.price_estimate_upper_bound != null
+                          ? Number(reportData.nftPriceEstimate.price_estimate_upper_bound).toFixed(2)
+                          : "N/A"}
                       </div>
                       <div className="flex justify-between items-center pt-2 border-t border-neutral-800">
                         <span className="text-neutral-400 text-sm">Premium/Discount</span>
@@ -426,7 +446,10 @@ export default function DetailedReportsPage() {
                           }`}
                         >
                           <Percent className="w-4 h-4" />
-                          {reportData.floorVsEstimateDiffPercent?.toFixed(2) ?? "N/A"}%
+                          {reportData.floorVsEstimateDiffPercent != null
+                            ? Number(reportData.floorVsEstimateDiffPercent).toFixed(2)
+                            : "N/A"}
+                          %
                         </span>
                       </div>
                       <div className="text-sm text-center pt-2">
@@ -447,26 +470,50 @@ export default function DetailedReportsPage() {
                     <>
                       <div className="flex justify-between text-sm">
                         <span className="text-neutral-400">Rarity Score</span>
-                        <span className="text-white font-mono">{reportData.nftScores?.rarity_score?.toFixed(2) ?? "N/A"}</span>
+                        <span className="text-white font-mono">
+                          {reportData.nftScores?.rarity_score != null
+                            ? Number(reportData.nftScores.rarity_score).toFixed(2)
+                            : "N/A"}
+                        </span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-neutral-400">Price Ceiling</span>
-                        <span className="text-white font-mono">${reportData.nftScores?.price_ceiling?.toFixed(2) ?? "N/A"}</span>
+                        <span className="text-white font-mono">
+                          $
+                          {reportData.nftScores?.price_ceiling != null
+                            ? Number(reportData.nftScores.price_ceiling).toFixed(2)
+                            : "N/A"}
+                        </span>
                       </div>
                     </>
                   ) : (
                     <>
                       <div className="flex justify-between text-sm">
                         <span className="text-neutral-400">Market Cap</span>
-                        <span className="text-white font-mono">${reportData.collectionScores?.marketcap?.toLocaleString() ?? "N/A"}</span>
+                        <span className="text-white font-mono">
+                          $
+                          {reportData.collectionScores?.marketcap != null
+                            ? Number(reportData.collectionScores.marketcap).toLocaleString()
+                            : "N/A"}
+                        </span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-neutral-400">Average Price</span>
-                        <span className="text-white font-mono">${reportData.collectionScores?.price_avg?.toFixed(2) ?? "N/A"}</span>
+                        <span className="text-white font-mono">
+                          $
+                          {reportData.collectionScores?.price_avg != null
+                            ? Number(reportData.collectionScores.price_avg).toFixed(2)
+                            : "N/A"}
+                        </span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-neutral-400">Price Ceiling</span>
-                        <span className="text-white font-mono">${reportData.collectionScores?.price_ceiling?.toFixed(2) ?? "N/A"}</span>
+                        <span className="text-white font-mono">
+                          $
+                          {reportData.collectionScores?.price_ceiling != null
+                            ? Number(reportData.collectionScores.price_ceiling).toFixed(2)
+                            : "N/A"}
+                        </span>
                       </div>
                     </>
                   )}
