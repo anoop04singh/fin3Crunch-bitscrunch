@@ -450,31 +450,33 @@ export default function DetailedReportsPage() {
                   {reportData.isSpecificNft && reportData.nftScores && (
                     <div className="flex justify-between text-sm">
                       <span className="text-neutral-400">Rarity Score</span>
-                      <span className="text-white font-mono">{reportData.nftScores.rarity_score.toFixed(2)}</span>
+                      <span className="text-white font-mono">
+                        {reportData.nftScores?.rarity_score?.toFixed(2) ?? "N/A"}
+                      </span>
                     </div>
                   )}
                   <div className="flex justify-between text-sm">
                     <span className="text-neutral-400">Popularity Score</span>
                     <span className="text-white font-mono">
                       {reportData.isSpecificNft
-                        ? reportData.nftScores?.popularity_score.toFixed(2)
-                        : reportData.collectionScores?.popularity_score.toFixed(2)}
+                        ? reportData.nftScores?.popularity_score?.toFixed(2) ?? "N/A"
+                        : reportData.collectionScores?.popularity_score?.toFixed(2) ?? "N/A"}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-neutral-400">Liquidity Score</span>
                     <span className="text-white font-mono">
                       {reportData.isSpecificNft
-                        ? reportData.nftScores?.liquidity_score.toFixed(2)
-                        : reportData.collectionScores?.liquidity_score.toFixed(2)}
+                        ? reportData.nftScores?.liquidity_score?.toFixed(2) ?? "N/A"
+                        : reportData.collectionScores?.liquidity_score?.toFixed(2) ?? "N/A"}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-neutral-400">Market Sentiment</span>
                     <span className="text-white font-mono">
                       {reportData.isSpecificNft
-                        ? reportData.nftScores?.market_sentiment_score.toFixed(2)
-                        : reportData.collectionScores?.market_sentiment_score.toFixed(2)}
+                        ? reportData.nftScores?.market_sentiment_score?.toFixed(2) ?? "N/A"
+                        : reportData.collectionScores?.market_sentiment_score?.toFixed(2) ?? "N/A"}
                     </span>
                   </div>
                 </CardContent>
