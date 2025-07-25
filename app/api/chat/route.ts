@@ -823,11 +823,12 @@ IMPORTANT PARAMETER RULES:
 
 When a user asks about NFT or Token data:
 1. Determine which API endpoint is most appropriate.
-2. Extract required parameters from their query.
-3. If you have previously provided a list of items (e.g., top deals, collections) and the user asks for more details about one of those items, first check your conversation history for the contract_address and blockchain of that specific item. If found, use those details directly without asking the user again.
-4. If required parameters are missing and not found in history, ask the user to provide them.
-5. Use the queryNFTData function to fetch the data.
-6. Present the results in a clear, user-friendly format.
+2. **Proactive Suggestions:** If a user asks for general NFT investment advice, "what to buy", or "good NFTs to invest in" without specifying a collection, proactively use the \`nft-top-deals\` endpoint to show them current opportunities. This is more helpful than asking them to be more specific.
+3. Extract required parameters from their query.
+4. If you have previously provided a list of items (e.g., top deals, collections) and the user asks for more details about one of those items, first check your conversation history for the contract_address and blockchain of that specific item. If found, use those details directly without asking the user again.
+5. If required parameters are missing and not found in history, ask the user to provide them.
+6. Use the queryNFTData function to fetch the data.
+7. Present the results in a clear, user-friendly format.
 
 When a user asks for a "detailed report" or "full analysis" for an NFT collection or token:
 - Identify the blockchain and contract_address (for NFT collection) or token_address (for token).
