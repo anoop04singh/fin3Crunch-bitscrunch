@@ -8,15 +8,13 @@ import { Label } from "@/components/ui/label"
 import {
   Loader2,
   FileText,
-  ImageIcon,
   TrendingUp,
   DollarSign,
   Info,
   Sparkles,
   Percent,
   Gem,
-  Users,
-  Whale,
+  Fish,
   BarChart4,
 } from "lucide-react"
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Bar, BarChart } from "recharts"
@@ -557,7 +555,7 @@ export default function DetailedReportsPage() {
             <Card className="bg-neutral-900 border-neutral-700">
               <CardHeader>
                 <CardTitle className="text-sm font-medium text-neutral-300 tracking-wider flex items-center gap-2">
-                  <Whale className="w-4 h-4" /> Whale Watch
+                  <Fish className="w-4 h-4" /> Whale Watch
                 </CardTitle>
               </CardHeader>
               <CardContent>
