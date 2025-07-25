@@ -9,7 +9,7 @@ const API_ENDPOINTS = {
   // Token Endpoints
   "token-balance": {
     url: "https://api.unleashnfts.com/api/v2/token/balance",
-    params: ["blockchain", "token_address"],
+    params: ["blockchain", "address", "token_address"],
     description: "Get the token balances for a specific wallet address.",
   },
   "token-metrics": {
@@ -692,7 +692,15 @@ const nftQueryFunction = {
       },
       wallet_address: {
         type: "string",
-        description: "Wallet address for wallet-specific queries",
+        description: "The user's wallet address (e.g. 0x...). Use for endpoints like wallet-score, wallet-analytics.",
+      },
+      wallet: {
+        type: "string",
+        description: "The user's wallet address (e.g. 0x...). Note: Use this parameter name for 'wallet-metrics' and 'wallet-balance-nft' endpoints.",
+      },
+      address: {
+        type: "string",
+        description: "The user's wallet address (e.g. 0x...). Note: Use this parameter name for 'wallet-balance-token' and 'token-balance' endpoints.",
       },
       token_address: {
         type: "string",
@@ -804,11 +812,14 @@ export async function POST(req: NextRequest) {
 You have been provided with comprehensive API documentation. You must analyze it to select the most appropriate endpoints and parameters for the user's query. Pay close attention to required parameters like \`sort_by\` and use the documented default values if the user does not specify a sorting preference. When a user asks about suspicious activity or wash trading, you must use the \`nft-washtrade\` or \`collection-washtrade\` endpoints. For any endpoint that returns trend data (e.g., \`sales_trend\`, \`volume_trend\`, \`washtrade_assets_trend\`), you must process this data to be displayed as a chart.
 
 IMPORTANT PARAMETER RULES:
-- Always use blockchain names as strings (e.g., "ethereum", "polygon", "avalanche")
-- For collection-specific endpoints, use "contract_address" parameter (not "address")
-- For wallet-specific endpoints, use "wallet_address" parameter
-- For token-specific endpoints, use "token_address" parameter
-- Common aliases: eth=ethereum, matic=polygon, avax=avalanche, bnb/bsc=binance, sol=solana, btc=bitcoin
+- The API uses different parameter names for wallet addresses depending on the endpoint. Be very careful and always use the correct one:
+  - Use \`wallet_address\` for endpoints like \`wallet-score\`, \`wallet-analytics\`, etc.
+  - Use \`wallet\` for \`wallet-metrics\` and \`wallet-balance-nft\`.
+  - Use \`address\` for \`wallet-balance-token\` and \`token-balance\`.
+- For collection-specific endpoints, use "contract_address".
+- For token-specific endpoints, use "token_address".
+- Common aliases: eth=ethereum, matic=polygon, avax=avalanche, bnb/bsc=binance, sol=solana, btc=bitcoin.
+- Always refer to the function tool schema for the correct parameter name for each endpoint.
 
 When a user asks about NFT or Token data:
 1. Determine which API endpoint is most appropriate.
