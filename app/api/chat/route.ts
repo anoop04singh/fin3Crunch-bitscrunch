@@ -60,22 +60,22 @@ const API_ENDPOINTS = {
     description: "Retrieve the metadata for a specific NFT.",
   },
   "nft-analytics": {
-    url: "https://api.unleashnfts.com/api/v2/nft/analytics",
+    url: "https://api.unleashnfts.com/api/v2/nft/analytics?sort_by=sales",
     params: ["contract_address", "token_id", "blockchain", "sort_by"],
     description: "Get detailed analytics for a specific NFT. `sort_by` is required, defaults to 'sales'.",
   },
   "nft-scores": {
-    url: "https://api.unleashnfts.com/api/v2/nft/scores",
+    url: "https://api.unleashnfts.com/api/v2/nft/scores?sort_by=price_ceiling",
     params: ["contract_address", "token_id", "blockchain", "sort_by"],
     description: "Get performance scores for a specific NFT. `sort_by` is required, defaults to 'price_ceiling'.",
   },
   "nft-washtrade": {
-    url: "https://api.unleashnfts.com/api/v2/nft/washtrade",
+    url: "https://api.unleashnfts.com/api/v2/nft/washtrade?sort_by=washtrade_volume",
     params: ["contract_address", "token_id", "blockchain", "sort_by"],
     description: "Detect and analyze wash trading for a specific NFT. `sort_by` is required, defaults to 'washtrade_volume'.",
   },
   "nft-top-deals": {
-    url: "https://api.unleashnfts.com/api/v2/nft/top_deals",
+    url: "https://api.unleashnfts.com/api/v2/nft/top_deals?sort_by=deal_score",
     params: ["sort_by"],
     description: "Discover the best current deals for NFTs. `sort_by` is required, defaults to 'deal_score'.",
   },
@@ -91,32 +91,32 @@ const API_ENDPOINTS = {
     description: "Retrieve metadata for an entire NFT collection.",
   },
   "collection-owner": {
-    url: "https://api.unleashnfts.com/api/v2/nft/collection/owner",
+    url: "https://api.unleashnfts.com/api/v2/nft/collection/owner?sort_by=acquired_date",
     params: ["blockchain", "contract_address", "sort_by"],
     description: "Get a list of all NFT holders for a collection. `sort_by` is required, defaults to 'acquired_date'.",
   },
   "collection-analytics": {
-    url: "https://api.unleashnfts.com/api/v2/nft/collection/analytics",
+    url: "https://api.unleashnfts.com/api/v2/nft/collection/analytics?sort_by=sales",
     params: ["blockchain", "contract_address", "time_range", "sort_by"],
     description: "Get detailed analytics for a collection. `sort_by` is required, defaults to 'sales'.",
   },
   "collection-holders": {
-    url: "https://api.unleashnfts.com/api/v2/nft/collection/holders",
+    url: "https://api.unleashnfts.com/api/v2/nft/collection/holders?sort_by=holders",
     params: ["blockchain", "contract_address", "time_range", "sort_by"],
     description: "Get detailed holder metrics for a collection. `sort_by` is required, defaults to 'holders'.",
   },
   "collection-scores": {
-    url: "https://api.unleashnfts.com/api/v2/nft/collection/scores",
+    url: "https://api.unleashnfts.com/api/v2/nft/collection/scores?sort_by=marketcap",
     params: ["blockchain", "contract_address", "time_range", "sort_by"],
     description: "Get performance scores for a collection. `sort_by` is required, defaults to 'marketcap'.",
   },
   "collection-washtrade": {
-    url: "https://api.unleashnfts.com/api/v2/nft/collection/washtrade",
+    url: "https://api.unleashnfts.com/api/v2/nft/collection/washtrade?sort_by=washtrade_assets",
     params: ["blockchain", "contract_address", "time_range", "sort_by"],
     description: "Analyze wash trading at the collection level. `sort_by` is required, defaults to 'washtrade_assets'.",
   },
   "collection-whales": {
-    url: "https://api.unleashnfts.com/api/v2/nft/collection/whales",
+    url: "https://api.unleashnfts.com/api/v2/nft/collection/whales?sort_by=nft_count",
     params: ["blockchain", "contract_address", "time_range", "sort_by"],
     description: "Get insights into 'Whales' within a collection. `sort_by` is required, defaults to 'nft_count'.",
   },
@@ -152,17 +152,17 @@ const API_ENDPOINTS = {
     description: "Get aggregated wash trade metrics for the entire NFT market.",
   },
   "marketplace-analytics": {
-    url: "https://api.unleashnfts.com/api/v2/nft/marketplace/analytics",
+    url: "https://api.unleashnfts.com/api/v2/nft/marketplace/analytics?sort_by=volume",
     params: ["blockchain", "time_range", "sort_by"],
     description: "Get detailed analytics for a specific NFT marketplace. `sort_by` is required, defaults to 'volume'.",
   },
   "marketplace-holders": {
-    url: "https://api.unleashnfts.com/api/v2/nft/marketplace/holders",
+    url: "https://api.unleashnfts.com/api/v2/nft/marketplace/holders?sort_by=holders",
     params: ["blockchain", "time_range", "sort_by"],
     description: "Get holder metrics for a specific NFT marketplace. `sort_by` is required, defaults to 'holders'.",
   },
   "marketplace-traders": {
-    url: "https://api.unleashnfts.com/api/v2/nft/marketplace/traders",
+    url: "https://api.unleashnfts.com/api/v2/nft/marketplace/traders?sort_by=traders",
     params: ["blockchain", "time_range", "sort_by"],
     description: "Get trader metrics for a specific NFT marketplace. `sort_by` is required, defaults to 'traders'.",
   },
@@ -809,7 +809,7 @@ export async function POST(req: NextRequest) {
 
     const systemPrompt = `You are an expert Web3 financial advisor and analytics assistant named "fin3Crunch AI". You have access to BitsCrunch APIs for comprehensive NFT/WEB3 data analysis.
 
-You have been provided with comprehensive API documentation. You must analyze it to select the most appropriate endpoints and parameters for the user's query. Pay close attention to required parameters like \`sort_by\` and use the documented default values if the user does not specify a sorting preference. When a user asks about suspicious activity or wash trading, you must use the \`nft-washtrade\` or \`collection-washtrade\` endpoints. For any endpoint that returns trend data (e.g., \`sales_trend\`, \`volume_trend\`, \`washtrade_assets_trend\`), you must process this data to be displayed as a chart.
+You have been provided with comprehensive API documentation. You must analyze it to select the most appropriate endpoints and parameters for the user's query. Pay close attention to required parameters like \`sort_by\` and use the documented default values if the user does not specify a sorting preference. When a user asks about suspicious activity or wash trading, you must use the \`nft-washtrade\` or \`collection-washtrade\` endpoints. If the API returns no wash trading data for the requested timeframe (e.g., 24h), you should inform the user that no activity was detected and suggest they try a longer timeframe, such as '7d' or '30d', to get a broader view. For any endpoint that returns trend data (e.g., \`sales_trend\`, \`volume_trend\`, \`washtrade_assets_trend\`), you must process this data to be displayed as a chart.
 
 IMPORTANT PARAMETER RULES:
 - The API uses different parameter names for wallet addresses depending on the endpoint. Be very careful and always use the correct one:
