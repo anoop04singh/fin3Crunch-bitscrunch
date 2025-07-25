@@ -30,6 +30,7 @@ interface WashTradedNft {
 interface DetailedWashTradeData {
   trends?: { date: string; [key: string]: any }[]
   metrics?: any
+  metadata?: any
 }
 
 // Helper Functions
@@ -151,24 +152,36 @@ export default function WallOfShamePage() {
     setLoadingDetails(true)
     setDetailedData(null)
     try {
-      let data
+      let washTradeData
+      let metadata
       if ("washtrade_assets" in item) {
         // It's a collection
-        data = await fetchApiData("/nft/collection/washtrade", {
-          contract_address: item.contract_address,
-          time_range: "24h",
-          sort_by: "washtrade_volume",
-        })
-        const trends = data?.[0] ? parseTrendData(data[0]) : []
-        setDetailedData({ trends, metrics: data?.[0] })
+        ;[washTradeData, metadata] = await Promise.all([
+          fetchApiData("/nft/collection/washtrade", {
+            contract_address: item.contract_address,
+            time_range: "24h",
+            sort_by: "washtrade_volume",
+          }),
+          fetchApiData("/nft/collection/metadata", {
+            contract_address: item.contract_address,
+          }),
+        ])
+        const trends = washTradeData?.[0] ? parseTrendData(washTradeData[0]) : []
+        setDetailedData({ trends, metrics: washTradeData?.[0], metadata: metadata?.[0] })
       } else {
         // It's an NFT
-        data = await fetchApiData("/nft/washtrade", {
-          contract_address: item.contract_address,
-          token_id: item.token_id,
-          sort_by: "washtrade_volume",
-        })
-        setDetailedData({ metrics: data?.[0] })
+        ;[washTradeData, metadata] = await Promise.all([
+          fetchApiData("/nft/washtrade", {
+            contract_address: item.contract_address,
+            token_id: item.token_id,
+            sort_by: "washtrade_volume",
+          }),
+          fetchApiData("/nft/metadata", {
+            contract_address: item.contract_address,
+            token_id: item.token_id,
+          }),
+        ])
+        setDetailedData({ metrics: washTradeData?.[0], metadata: metadata?.[0] })
       }
     } catch (err: any) {
       setError(`Failed to load details: ${err.message}`)
@@ -315,6 +328,30 @@ export default function WallOfShamePage() {
                 </div>
               ) : (
                 <div className="space-y-6">
+                  {detailedData?.metadata && (
+                    <Card className="bg-neutral-800/50 border-neutral-700">
+                      <CardContent className="p-4 flex flex-col md:flex-row items-start gap-4">
+                        <img
+                          src={
+                            detailedData.metadata.image_url ||
+                            ("image_url" in selectedItem && selectedItem.image_url) ||
+                            "/placeholder.svg"
+                          }
+                          alt={detailedData.metadata.collection_name || selectedItem.collection_name}
+                          className="w-full md:w-32 h-auto md:h-32 rounded-lg object-cover border border-neutral-700"
+                        />
+                        <div className="flex-1">
+                          <h3 className="text-lg font-bold text-white">
+                            {detailedData.metadata.collection_name || selectedItem.collection_name}
+                          </h3>
+                          <p className="text-sm text-neutral-400 leading-relaxed mt-2">
+                            {detailedData.metadata.description || "No description available."}
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                     <div>
                       <p className="text-xs text-neutral-400">Wash Trade Volume</p>
