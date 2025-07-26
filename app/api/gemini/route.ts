@@ -107,9 +107,9 @@ export async function POST(req: NextRequest) {
         - Floor Price: $${collectionAnalytics?.floor_price_usd?.toFixed(2) || "N/A"}
         
         **Collection Scores:**
-        - Market Cap: $${collectionScores?.marketcap?.toLocaleString() || "N/A"}
-        - Average Price: $${collectionScores?.price_avg?.toFixed(2) || "N/A"}
-        - Price Ceiling: $${collectionScores?.price_ceiling?.toFixed(2) || "N/A"}
+        - Market Cap: $${collectionScores?.marketcap != null ? Number(collectionScores.marketcap).toLocaleString() : "N/A"}
+        - Average Price: $${collectionScores?.price_avg != null ? Number(collectionScores.price_avg).toFixed(2) : "N/A"}
+        - Price Ceiling: $${collectionScores?.price_ceiling != null ? Number(collectionScores.price_ceiling).toFixed(2) : "N/A"}
         
         **Whale Activity:**
         - Whale Holders: ${collectionWhales?.whale_holders || "N/A"}
