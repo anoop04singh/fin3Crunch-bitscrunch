@@ -269,7 +269,32 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
   let whalesChartData: any[] | undefined = undefined // For market holders
 
   try {
-    if (endpoint.includes("analytics")) {
+    if (endpoint.includes("marketplace-analytics")) {
+      if (Array.isArray(dataToProcess) && dataToProcess.length > 0) {
+        const totalVolume = dataToProcess.reduce((acc, mp) => acc + (parseFloat(mp.volume) || 0), 0)
+        const totalSales = dataToProcess.reduce((acc, mp) => acc + (parseInt(mp.sales, 10) || 0), 0)
+        const totalTransactions = dataToProcess.reduce((acc, mp) => acc + (parseInt(mp.transactions, 10) || 0), 0)
+        const topMarketplace = dataToProcess.sort((a, b) => b.volume - a.volume)[0]
+
+        summary = {
+          total_marketplaces: dataToProcess.length,
+          total_volume_usd: totalVolume,
+          total_sales_count: totalSales,
+          total_transactions: totalTransactions,
+          top_marketplace_by_volume: topMarketplace.name,
+          top_marketplace_volume: topMarketplace.volume,
+        }
+        detailedData = dataToProcess.map((mp) => ({
+          marketplace: mp.name,
+          volume_usd: parseFloat(mp.volume).toFixed(2),
+          sales: mp.sales,
+          transactions: mp.transactions,
+          volume_change_percent: mp.volume_change?.toFixed(2),
+        }))
+      } else {
+        summary = { message: "No marketplace analytics data available." }
+      }
+    } else if (endpoint.includes("analytics")) {
       if (Array.isArray(dataToProcess)) {
         // This path is for /nft/collection/analytics
         const latestData = dataToProcess[dataToProcess.length - 1] || {}
