@@ -82,32 +82,51 @@ export async function POST(req: NextRequest) {
         collectionWhales,
         floorVsEstimateDiffPercent,
         recommendation,
+        collectionTrends,
       } = reportData
+
+      const summarizeTrend = (trendData?: any[], key?: string) => {
+        if (!trendData || trendData.length < 2 || !key) return "Not available."
+        const startValue = trendData[0][key]
+        const endValue = trendData[trendData.length - 1][key]
+        const change = endValue - startValue
+        const percentChange = startValue !== 0 ? (change / startValue) * 100 : 0
+        return `Trend from ${startValue.toLocaleString()} to ${endValue.toLocaleString()} (${
+          percentChange >= 0 ? "+" : ""
+        }${percentChange.toFixed(2)}%).`
+      }
 
       let reportContent = `
         **Collection:** ${collectionMetadata?.collection_name || "N/A"}
         **Description:** ${collectionMetadata?.description || "N/A"}
-        **Total Supply:** ${collectionMetadata?.total_supply?.toLocaleString() || "N/A"}
+        **Total Supply:** ${collectionMetadata?.distinct_nft_count?.toLocaleString() || "N/A"}
         
         **30-Day Analytics:**
-        - Volume: $${collectionAnalytics?.volume_usd?.toLocaleString() || "N/A"}
+        - Volume: $${collectionAnalytics?.volume?.toLocaleString() || "N/A"}
         - Sales: ${collectionAnalytics?.sales?.toLocaleString() || "N/A"}
         - Floor Price: $${collectionAnalytics?.floor_price_usd?.toFixed(2) || "N/A"}
         
         **Collection Scores:**
-        - Market Cap: $${collectionScores?.marketcap_usd?.toLocaleString() || "N/A"}
-        - Popularity Score: ${collectionScores?.popularity_score?.toFixed(2) || "N/A"}
-        - Liquidity Score: ${collectionScores?.liquidity_score?.toFixed(2) || "N/A"}
+        - Market Cap: $${collectionScores?.marketcap?.toLocaleString() || "N/A"}
+        - Average Price: $${collectionScores?.price_avg?.toFixed(2) || "N/A"}
+        - Price Ceiling: $${collectionScores?.price_ceiling?.toFixed(2) || "N/A"}
         
         **Whale Activity:**
-        - Whale Count: ${collectionWhales?.whale_count || "N/A"}
+        - Whale Holders: ${collectionWhales?.whale_holders || "N/A"}
+        - Unique Buyers: ${collectionWhales?.unique_buy_wallets || "N/A"}
+        - Unique Sellers: ${collectionWhales?.unique_sell_wallets || "N/A"}
+
+        **30-Day Trends:**
+        - Volume Trend: ${summarizeTrend(collectionTrends, "volume")}
+        - Sales Trend: ${summarizeTrend(collectionTrends, "sales")}
+        - Transactions Trend: ${summarizeTrend(collectionTrends, "transactions")}
       `
 
       if (isSpecificNft) {
         reportContent += `
         
         **Specific NFT Analysis (Token ID: ${reportData.nftMetadata?.token_id}):**
-        - Estimated Price: $${nftPriceEstimate?.estimated_price_usd?.toFixed(2) || "N/A"}
+        - Estimated Price: $${nftPriceEstimate?.price_estimate?.toFixed(2) || "N/A"}
         - Price vs. Floor: ${floorVsEstimateDiffPercent?.toFixed(2) || "N/A"}%
         - Rarity Score: ${nftScores?.rarity_score?.toFixed(2) || "N/A"}
         - Recommendation: ${recommendation || "N/A"}
@@ -115,7 +134,7 @@ export async function POST(req: NextRequest) {
       }
 
       prompt = `
-        Analyze the following detailed NFT report. Provide a comprehensive yet concise summary covering the collection's market position, price analysis, and key scores. If it's a specific NFT, include insights on its value relative to the collection floor. Conclude with a final verdict or outlook.
+        Analyze the following detailed NFT report. Provide a comprehensive yet concise summary covering the collection's market position, price analysis, key scores, and recent trends. If it's a specific NFT, include insights on its value relative to the collection floor. Conclude with a final verdict or outlook. Do not state that data is missing if it is provided as "N/A"; simply work with the data you have.
         
         Report Data:
         ${reportContent}
