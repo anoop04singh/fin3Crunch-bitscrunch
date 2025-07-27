@@ -18,6 +18,7 @@ import { RecommendationCard } from "@/components/chat/recommendation-card"
 import { MetricsCard } from "@/components/chat/metrics-card"
 import { DataTable } from "@/components/chat/data-table"
 import { LineChartCard } from "@/components/chat/line-chart-card"
+import { AnimatedSection } from "@/components/animated-section"
 
 interface Message {
   role: "user" | "assistant"
@@ -295,11 +296,17 @@ export default function AgentNetworkPage() {
       ) : (
         <div className="h-full flex flex-col">
           <div className="flex-1 overflow-y-auto custom-scrollbar">
-            <div className="p-6">
-              <h1 className="text-3xl font-bold text-white">fin3Crunch AI</h1>
-              <p className="text-base text-neutral-400 mt-1">Your intelligent Web3 analytics companion</p>
+            <div className="p-6 space-y-16">
+              <AnimatedSection>
+                <div className="text-center max-w-2xl mx-auto">
+                  <h1 className="text-3xl font-bold text-white">fin3Crunch AI</h1>
+                  <p className="text-base text-neutral-400 mt-1">Your intelligent Web3 analytics companion</p>
+                </div>
+              </AnimatedSection>
+              <AnimatedSection delay={0.1}>
+                <MarketMetrics analytics={marketAnalytics} summary={marketSummary} loading={isLoading && marketAnalytics === null} />
+              </AnimatedSection>
             </div>
-            <MarketMetrics analytics={marketAnalytics} summary={marketSummary} loading={isLoading && marketAnalytics === null} />
           </div>
           <div className="p-4 bg-transparent border-t border-neutral-800">
             <div className="relative">

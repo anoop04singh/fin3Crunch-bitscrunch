@@ -76,42 +76,50 @@ const parseSummary = (summary: string | null): { title: string; content: string 
   return sections
 }
 
+const MetricItem = ({
+  icon: Icon,
+  title,
+  value,
+  change,
+}: {
+  icon: React.ElementType
+  title: string
+  value: string
+  change: React.ReactNode
+}) => (
+  <div className="text-center">
+    <div className="flex items-center justify-center text-neutral-400 text-sm mb-2">
+      <Icon className="w-4 h-4 mr-2" />
+      <span>{title}</span>
+    </div>
+    <div className="text-4xl font-bold text-white font-mono">{value}</div>
+    <div className="text-xs text-neutral-500 mt-1 flex items-center justify-center gap-2">
+      {change}
+      <span>vs previous 24h</span>
+    </div>
+  </div>
+)
+
 export function MarketMetrics({ analytics, summary, loading }: MarketMetricsProps) {
   const parsedSummary = parseSummary(summary)
 
   if (loading) {
     return (
-      <div className="px-6 pb-6 space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="space-y-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[...Array(3)].map((_, i) => (
-            <Card key={i} className="bg-neutral-900/50 border-neutral-800">
-              <CardHeader className="pb-2">
-                <Skeleton className="h-4 w-24" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-8 w-32" />
-                <Skeleton className="h-4 w-20 mt-2" />
-              </CardContent>
-            </Card>
+            <div key={i} className="flex flex-col items-center space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-10 w-40" />
+              <Skeleton className="h-4 w-32" />
+            </div>
           ))}
         </div>
-        <Card className="bg-neutral-900/50 border-neutral-800">
-          <CardHeader>
-            <Skeleton className="h-5 w-48" />
-          </CardHeader>
-          <CardContent className="space-y-4 pt-2">
-            <div>
-              <Skeleton className="h-4 w-32 mb-2" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-5/6 mt-1" />
-            </div>
-            <div>
-              <Skeleton className="h-4 w-40 mb-2" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-full mt-1" />
-            </div>
-          </CardContent>
-        </Card>
+        <div className="max-w-3xl mx-auto">
+          <Skeleton className="h-6 w-48 mb-4" />
+          <Skeleton className="h-4 w-full mb-2" />
+          <Skeleton className="h-4 w-5/6" />
+        </div>
       </div>
     )
   }
@@ -121,68 +129,39 @@ export function MarketMetrics({ analytics, summary, loading }: MarketMetricsProp
   }
 
   return (
-    <div className="px-6 pb-6 space-y-4 animate-fade-in">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-neutral-900/50 border-neutral-800 transition-all hover:border-teal-500/30 hover:bg-neutral-800/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-medium text-neutral-400 flex items-center gap-2">
-              <DollarSign className="w-4 h-4" /> Volume (24h)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">${formatNumber(analytics.volume)}</div>
-            <div className="text-xs text-neutral-500 mt-1 flex items-center gap-2">
-              {formatPercent(analytics.volume_change)}
-              <span>vs previous 24h</span>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-neutral-900/50 border-neutral-800 transition-all hover:border-teal-500/30 hover:bg-neutral-800/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-medium text-neutral-400 flex items-center gap-2">
-              <ShoppingCart className="w-4 h-4" /> Sales (24h)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">{formatNumber(analytics.sales)}</div>
-            <div className="text-xs text-neutral-500 mt-1 flex items-center gap-2">
-              {formatPercent(analytics.sales_change)}
-              <span>vs previous 24h</span>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-neutral-900/50 border-neutral-800 transition-all hover:border-teal-500/30 hover:bg-neutral-800/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-medium text-neutral-400 flex items-center gap-2">
-              <ArrowLeftRight className="w-4 h-4" /> Transactions (24h)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">{formatNumber(analytics.transactions)}</div>
-            <div className="text-xs text-neutral-500 mt-1 flex items-center gap-2">
-              {formatPercent(analytics.transactions_change)}
-              <span>vs previous 24h</span>
-            </div>
-          </CardContent>
-        </Card>
+    <div className="space-y-16">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <MetricItem
+          icon={DollarSign}
+          title="Volume (24h)"
+          value={`$${formatNumber(analytics.volume)}`}
+          change={formatPercent(analytics.volume_change)}
+        />
+        <MetricItem
+          icon={ShoppingCart}
+          title="Sales (24h)"
+          value={formatNumber(analytics.sales)}
+          change={formatPercent(analytics.sales_change)}
+        />
+        <MetricItem
+          icon={ArrowLeftRight}
+          title="Transactions (24h)"
+          value={formatNumber(analytics.transactions)}
+          change={formatPercent(analytics.transactions_change)}
+        />
       </div>
       {summary && (
-        <Card className="bg-neutral-900/50 border-neutral-800 transition-all hover:border-teal-500/30">
-          <CardHeader>
-            <CardTitle className="text-lg font-medium text-neutral-300 flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-teal-200" />
-              Market Sentiment Analysis
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0 space-y-5">
-            {parsedSummary.map((section, index) => (
-              <div key={index}>
-                <h3 className="font-semibold text-sm text-teal-200 mb-2">{section.title}</h3>
-                <p className="text-sm text-neutral-300 leading-relaxed whitespace-pre-wrap">{section.content.replace(/\*/g, "")}</p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+        <div className="relative border-l-4 border-teal-500 pl-8 py-4 bg-neutral-900/30 rounded-r-lg max-w-3xl mx-auto">
+          <Sparkles className="absolute -left-4 top-4 w-6 h-6 text-teal-400 bg-neutral-900 p-1 rounded-full" />
+          {parsedSummary.map((section, index) => (
+            <div key={index} className={index > 0 ? "mt-4" : ""}>
+              <h3 className="font-semibold text-base text-teal-200 mb-2">{section.title}</h3>
+              <p className="text-sm text-neutral-300 leading-relaxed whitespace-pre-wrap">
+                {section.content.replace(/\*/g, "")}
+              </p>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   )
