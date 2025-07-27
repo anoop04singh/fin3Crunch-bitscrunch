@@ -361,82 +361,88 @@ export default function WallOfShamePage() {
                   ) : (
                     <div className="space-y-6">
                       {detailedData?.metadata && (
-                        <Card className="bg-neutral-800/50 border-neutral-700">
-                          <CardContent className="p-4 flex flex-col md:flex-row items-start gap-4">
-                            <img
-                              src={
-                                detailedData.metadata.image_url ||
-                                ("image_url" in selectedItem && selectedItem.image_url) ||
-                                "/placeholder.svg"
-                              }
-                              alt={detailedData.metadata.collection_name || selectedItem.collection_name}
-                              className="w-full md:w-32 h-auto md:h-32 rounded-lg object-cover border border-neutral-700"
-                            />
-                            <div className="flex-1">
-                              <h3 className="text-lg font-bold text-white">
-                                {detailedData.metadata.collection_name || selectedItem.collection_name}
-                              </h3>
-                              <p className="text-sm text-neutral-400 leading-relaxed mt-2">
-                                {detailedData.metadata.description || "No description available."}
-                              </p>
-                            </div>
-                          </CardContent>
-                        </Card>
+                        <AnimatedSection delay={0.1}>
+                          <Card className="bg-neutral-800/50 border-neutral-700">
+                            <CardContent className="p-4 flex flex-col md:flex-row items-start gap-4">
+                              <img
+                                src={
+                                  detailedData.metadata.image_url ||
+                                  ("image_url" in selectedItem && selectedItem.image_url) ||
+                                  "/placeholder.svg"
+                                }
+                                alt={detailedData.metadata.collection_name || selectedItem.collection_name}
+                                className="w-full md:w-32 h-auto md:h-32 rounded-lg object-cover border border-neutral-700"
+                              />
+                              <div className="flex-1">
+                                <h3 className="text-lg font-bold text-white">
+                                  {detailedData.metadata.collection_name || selectedItem.collection_name}
+                                </h3>
+                                <p className="text-sm text-neutral-400 leading-relaxed mt-2">
+                                  {detailedData.metadata.description || "No description available."}
+                                </p>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </AnimatedSection>
                       )}
 
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                        <div>
-                          <p className="text-xs text-neutral-400">Wash Trade Volume</p>
-                          <p className="text-xl font-bold text-red-400 font-mono">
-                            {formatCurrency(detailedData?.metrics?.washtrade_volume ?? 0)}
-                          </p>
+                      <AnimatedSection delay={0.2}>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                          <div>
+                            <p className="text-xs text-neutral-400">Wash Trade Volume</p>
+                            <p className="text-xl font-bold text-red-400 font-mono">
+                              {formatCurrency(detailedData?.metrics?.washtrade_volume ?? 0)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-neutral-400">Wash Traded Assets</p>
+                            <p className="text-xl font-bold text-white font-mono">
+                              {detailedData?.metrics?.washtrade_assets ?? "N/A"}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-neutral-400">Suspect Sales</p>
+                            <p className="text-xl font-bold text-white font-mono">
+                              {detailedData?.metrics?.washtrade_suspect_sales ?? "N/A"}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-neutral-400">Involved Wallets</p>
+                            <p className="text-xl font-bold text-white font-mono">
+                              {detailedData?.metrics?.washtrade_wallets ?? "N/A"}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-xs text-neutral-400">Wash Traded Assets</p>
-                          <p className="text-xl font-bold text-white font-mono">
-                            {detailedData?.metrics?.washtrade_assets ?? "N/A"}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-neutral-400">Suspect Sales</p>
-                          <p className="text-xl font-bold text-white font-mono">
-                            {detailedData?.metrics?.washtrade_suspect_sales ?? "N/A"}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-neutral-400">Involved Wallets</p>
-                          <p className="text-xl font-bold text-white font-mono">
-                            {detailedData?.metrics?.washtrade_wallets ?? "N/A"}
-                          </p>
-                        </div>
-                      </div>
+                      </AnimatedSection>
 
                       {detailedData?.trends && detailedData.trends.length > 0 && (
-                        <Card className="bg-neutral-800/50 border-neutral-700">
-                          <CardHeader>
-                            <CardTitle className="text-sm font-medium text-neutral-300 tracking-wider flex items-center gap-2">
-                              <BarChart4 className="w-4 h-4" /> 24-Hour Wash Trade Trends
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-                            {["volume", "assets", "sales", "wallets"].map((key) => (
-                              <div key={key}>
-                                <h3 className="text-sm font-medium text-white mb-2 capitalize">{key} Trend</h3>
-                                <ChartContainer config={{}} className="h-[150px] w-full">
-                                  <ResponsiveContainer>
-                                    <LineChart data={detailedData.trends} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                                      <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                                      <ChartTooltip content={<ChartTooltipContent />} />
-                                      <Line type="monotone" dataKey={key} stroke="hsl(var(--chart-4))" dot={false} />
-                                    </LineChart>
-                                  </ResponsiveContainer>
-                                </ChartContainer>
-                              </div>
-                            ))}
-                          </CardContent>
-                        </Card>
+                        <AnimatedSection delay={0.3}>
+                          <Card className="bg-neutral-800/50 border-neutral-700">
+                            <CardHeader>
+                              <CardTitle className="text-sm font-medium text-neutral-300 tracking-wider flex items-center gap-2">
+                                <BarChart4 className="w-4 h-4" /> 24-Hour Wash Trade Trends
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                              {["volume", "assets", "sales", "wallets"].map((key) => (
+                                <div key={key}>
+                                  <h3 className="text-sm font-medium text-white mb-2 capitalize">{key} Trend</h3>
+                                  <ChartContainer config={{}} className="h-[150px] w-full">
+                                    <ResponsiveContainer>
+                                      <LineChart data={detailedData.trends} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                                        <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={10} />
+                                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} />
+                                        <ChartTooltip content={<ChartTooltipContent />} />
+                                        <Line type="monotone" dataKey={key} stroke="hsl(var(--chart-4))" dot={false} />
+                                      </LineChart>
+                                    </ResponsiveContainer>
+                                  </ChartContainer>
+                                </div>
+                              ))}
+                            </CardContent>
+                          </Card>
+                        </AnimatedSection>
                       )}
                     </div>
                   )}
