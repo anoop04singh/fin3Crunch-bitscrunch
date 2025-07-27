@@ -19,6 +19,7 @@ import {
   BarChart4,
   Users,
   ChevronRight,
+  TrendingDown,
 } from "lucide-react"
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
@@ -26,7 +27,7 @@ import { XCircle } from "lucide-react"
 import { sleep } from "@/lib/utils"
 import { AnimatedSection } from "@/components/animated-section"
 
-// Interfaces (unchanged)
+// Interfaces
 interface NftMetadata {
   collection_name: string
   description: string
@@ -56,6 +57,8 @@ interface CollectionAnalytics {
   sales_trend: string
   transactions_trend: string
   assets_trend: string
+  volume_change?: number
+  sales_change?: number
 }
 
 interface NftPriceEstimate {
@@ -76,10 +79,12 @@ interface CollectionScores {
 }
 
 interface CollectionWhales {
-  whale_holders: number
-  unique_buy_wallets: number
-  unique_sell_wallets: number
-  top_whales: Array<{ wallet_address: string; nft_count: number }>
+  buy_whales: string
+  sell_whales: string
+  unique_buy_wallets: string
+  unique_sell_wallets: string
+  unique_wallets: string
+  whale_holders: string
 }
 
 interface TrendData {
@@ -99,6 +104,23 @@ interface DetailedReportData {
   floorVsEstimateDiffPercent?: number
   recommendation?: string
   collectionTrends?: TrendData[]
+}
+
+const formatPercentChange = (change: number | null | undefined) => {
+  if (change === null || change === undefined) {
+    return null
+  }
+  const percent = change * 100
+  const isPositive = percent >= 0
+  const Icon = isPositive ? TrendingUp : TrendingDown
+  const colorClass = isPositive ? "text-green-500" : "text-red-500"
+
+  return (
+    <span className={`font-bold flex items-center gap-1 ${colorClass}`}>
+      <Icon className="w-3 h-3" />
+      {percent.toFixed(2)}%
+    </span>
+  )
 }
 
 // Helper component for displaying key metrics
@@ -478,6 +500,7 @@ export default function DetailedReportsPage() {
                 icon={TrendingUp}
                 title="30d Volume"
                 value={`$${(reportData.collectionAnalytics?.volume ?? 0).toLocaleString()}`}
+                subValue={formatPercentChange(reportData.collectionAnalytics?.volume_change)}
               />
               <MetricItem
                 icon={Gem}
@@ -525,26 +548,39 @@ export default function DetailedReportsPage() {
           {/* Whale Watch & Attributes */}
           <AnimatedSection>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-6">
-                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                  <Fish className="w-5 h-5 text-teal-400" /> Whale Watch
-                </h3>
-                <MetricItem
-                  icon={Users}
-                  title="Whale Holders"
-                  value={reportData.collectionWhales?.whale_holders ?? "N/A"}
-                  className="border-none pl-0 mb-4"
-                />
-                <p className="text-sm text-neutral-400 mb-2">Top 5 Whales by Holdings:</p>
-                <div className="space-y-2">
-                  {(reportData.collectionWhales?.top_whales || []).slice(0, 5).map((whale, i) => (
-                    <div key={i} className="flex justify-between text-xs bg-neutral-800/50 p-2 rounded">
-                      <span className="text-neutral-300 font-mono">{whale.wallet_address}</span>
-                      <span className="text-white font-bold">{whale.nft_count} NFTs</span>
+              {reportData.collectionWhales && (
+                <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-6">
+                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <Fish className="w-5 h-5 text-teal-400" /> Whale Watch (30d)
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center">
+                      <p className="text-sm text-neutral-400">Unique Wallets</p>
+                      <p className="text-2xl font-bold text-white font-mono">
+                        {reportData.collectionWhales.unique_wallets ?? "N/A"}
+                      </p>
                     </div>
-                  ))}
+                    <div className="text-center">
+                      <p className="text-sm text-neutral-400">Whale Holders</p>
+                      <p className="text-2xl font-bold text-white font-mono">
+                        {reportData.collectionWhales.whale_holders ?? "N/A"}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm text-neutral-400">Buy Whales</p>
+                      <p className="text-2xl font-bold text-white font-mono">
+                        {reportData.collectionWhales.buy_whales ?? "N/A"}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm text-neutral-400">Sell Whales</p>
+                      <p className="text-2xl font-bold text-white font-mono">
+                        {reportData.collectionWhales.sell_whales ?? "N/A"}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
               {reportData.isSpecificNft && reportData.nftMetadata?.attributes && (
                 <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-6">
                   <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
