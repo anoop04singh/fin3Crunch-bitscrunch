@@ -412,8 +412,7 @@ export default function DetailedReportsPage() {
                   {(reportData.isSpecificNft
                     ? reportData.nftMetadata?.description
                     : reportData.collectionMetadata?.description
-                  )?.substring(0, 280) || "No description available."}
-                  ...
+                  ) || "No description available."}
                 </p>
               </div>
             </div>
