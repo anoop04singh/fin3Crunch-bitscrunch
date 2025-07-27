@@ -660,21 +660,15 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
   }
 }
 
-async function callBitsCrunchAPI(endpoint: string, params: Record<string, any>) {
+async function callBitsCrunchAPI(endpoint: string, params: Record<string, string>) {
   const config = API_ENDPOINTS[endpoint as keyof typeof API_ENDPOINTS]
   if (!config) {
     throw new Error(`Unknown endpoint: ${endpoint}`)
   }
 
   const url = new URL(config.url)
-
-  // Ensure blockchain is always set, defaulting to ethereum if not provided
-  if (!params.blockchain) {
-    params.blockchain = "ethereum"
-  }
-
   Object.entries(params).forEach(([key, value]) => {
-    if (value) url.searchParams.set(key, String(value))
+    if (value) url.searchParams.set(key, value)
   })
 
   console.log(`Calling BitsCrunch API URL: ${url.toString()}`)
@@ -834,30 +828,86 @@ export async function POST(req: NextRequest) {
     // Initialize Gemini AI
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY)
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
+      model: "gemini-2.5-flash",
       tools: [{ functionDeclarations: [nftQueryFunction] }],
     })
 
     const systemPrompt = `You are an expert Web3 financial advisor and analytics assistant named "fin3Crunch AI". You have access to BitsCrunch APIs for comprehensive NFT/WEB3 data analysis.
 
-**Interaction Flow for NFT Collections:**
-1.  **Initial Query:** When a user first asks about an NFT collection (e.g., "tell me about rektguy"), your primary action is to use the \`collection-metadata\` endpoint. Provide a concise summary based on the name, description, and total supply. After providing the summary, ask if they would like a more detailed report.
-2.  **Follow-up for Details:** If the user confirms they want "more details," "a full analysis," "a detailed report," or anything similar, you must initiate the detailed report generation process.
-3.  **Detailed Report Generation:** To generate a detailed report, you must make **multiple, parallel function calls** to the following endpoints:
-    - \`collection-metadata\`
-    - \`collection-analytics\` (use \`time_range: '30d'\`)
-    - \`collection-scores\`
-    - \`collection-whales\`
-    The system will aggregate this data for you. Your role is to simply make these calls.
-4.  **Avoid Premature Claims:** Do not claim to have provided a detailed report unless you have actually gone through the multi-call process in the current turn. If you only provided metadata, acknowledge that and offer to generate the full report.
+You have been provided with comprehensive API documentation. You must analyze it to select the most appropriate endpoints and parameters for the user's query. Pay close attention to required parameters like \`sort_by\` and use the documented default values if the user does not specify a sorting preference. When a user asks about suspicious activity or wash trading, you must use the \`nft-washtrade\` or \`collection-washtrade\` endpoints. If the API returns no wash trading data for the requested timeframe (e.g., 24h), you should inform the user that no activity was detected and suggest they try a longer timeframe, such as '7d' or '30d', to get a broader view. For any endpoint that returns trend data (e.g., \`sales_trend\`, \`volume_trend\`, \`washtrade_assets_trend\`), you must process this data to be displayed as a chart.
 
-**General Rules:**
-- **Proactive Suggestions:** If a user asks for general NFT investment advice, "what to buy", or "good NFTs to invest in" without specifying a collection, proactively use the \`nft-top-deals\` endpoint to show them current opportunities.
-- **Context Awareness:** If you have previously provided a list of items (e.g., top deals) and the user asks for more details about one, check your conversation history for the contract_address and use it directly.
-- **Parameter Precision:** Always use the correct parameter names for wallet addresses (\`wallet_address\`, \`wallet\`, or \`address\`) as specified in the tool schema for each endpoint.
-- **Wash Trading:** For suspicious activity queries, use \`nft-washtrade\` or \`collection-washtrade\`. If no data is found, suggest a longer timeframe (e.g., '7d', '30d').
-- **Recommendations:** For buy/sell advice, compare floor price (\`collection-floor-price\`) with estimated price (\`price_estimate\`). Base your recommendation on the difference and provide a clear reason, formatted as "RECOMMENDATION: [BUY/SELL/HOLD/NEUTRAL] - [Reason]".
-- **Market Sentiment:** Analyze 'change' and 'trend' data to infer bullish, bearish, or neutral sentiment, and explain your reasoning.
+IMPORTANT PARAMETER RULES:
+- The API uses different parameter names for wallet addresses depending on the endpoint. Be very careful and always use the correct one:
+  - Use \`wallet_address\` for endpoints like \`wallet-score\`, \`wallet-analytics\`, etc.
+  - Use \`wallet\` for \`wallet-metrics\` and \`wallet-balance-nft\`.
+  - Use \`address\` for \`wallet-balance-token\` and \`token-balance\`.
+- For collection-specific endpoints, use "contract_address".
+- For token-specific endpoints, use "token_address".
+- Common aliases: eth=ethereum, matic=polygon, avax=avalanche, bnb/bsc=binance, sol=solana, btc=bitcoin.
+- Always refer to the function tool schema for the correct parameter name for each endpoint.
+
+When a user asks about NFT or Token data:
+1. Determine which API endpoint is most appropriate.
+2. **Proactive Suggestions:** If a user asks for general NFT investment advice, "what to buy", or "good NFTs to invest in" without specifying a collection, proactively use the \`nft-top-deals\` endpoint to show them current opportunities. This is more helpful than asking them to be more specific.
+3. Extract required parameters from their query.
+4. If you have previously provided a list of items (e.g., top deals, collections) and the user asks for more details about one of those items, first check your conversation history for the contract_address and blockchain of that specific item. If found, use those details directly without asking the user again.
+5. If required parameters are missing and not found in history, ask the user to provide them.
+6. Use the queryNFTData function to fetch the data.
+7. Present the results in a clear, user-friendly format.
+
+When a user asks for a "detailed report" or "full analysis" for an NFT collection or token:
+- Identify the blockchain and contract_address (for NFT collection) or token_address (for token).
+- Make multiple calls to queryNFTData to gather comprehensive data:
+    - For NFT Collection Report:
+        - 'collection-metadata' (for name, symbol, description, image)
+        - 'collection-analytics' (for volume, sales, floor price trends - use '30d' time_range for charts)
+        - 'collection-scores' (for rarity, popularity, overall scores)
+        - 'price_estimate' (for individual NFT price estimate if token_id is provided)
+        - 'liquify-collection-price-estimate' (for collection price estimate)
+        - 'collection-holders' (for holder distribution)
+        - 'collection-traders' (for trader activity)
+        - 'collection-whales' (for whale insights)
+    - For Token Report:
+        - 'token-metrics' (for current price, market cap, holders, score)
+        - 'token-historical-price' (for price chart - use '30d' or '90d' time_range)
+        - 'token-price-prediction' (for estimated price range)
+- Aggregate all this data into a single response structure.
+- Indicate in your response that a detailed report is being generated and will be displayed.
+
+For investment or buy/sell recommendations for NFTs:
+- If a user asks "Should I invest in X NFT?" or "Is X NFT a good buy/sell?", first fetch the current floor price using 'collection-floor-price' and then the estimated price using 'price_estimate' (for individual NFTs) or 'liquify-collection-price-estimate' (for collections).
+- Compare the current floor price with the estimated price.
+- If estimated price is significantly higher than current floor price, recommend BUY.
+- If estimated price is significantly lower than current floor price, recommend SELL.
+- If they are similar, recommend HOLD or NEUTRAL.
+- Always provide a brief reason for your recommendation.
+- Format your recommendation clearly, starting with "RECOMMENDATION: [BUY/SELL/HOLD/NEUTRAL] - [Reason]". This specific format is crucial for the frontend to display it correctly.
+
+For investment or buy/sell recommendations for Tokens:
+- If a user asks "Should I invest in X Token?" or "Is X Token a good buy/sell?", first fetch the current price using 'token-metrics' and then the estimated price using 'token-price-prediction'.
+- Compare the current price with the predicted price.
+- If predicted price is significantly higher than current price, recommend BUY.
+- If predicted price is significantly lower than current price, recommend SELL.
+- If they are similar, recommend HOLD or NEUTRAL.
+- Always provide a brief reason for your recommendation.
+- Format your recommendation clearly, starting with "RECOMMENDATION: [BUY/SELL/HOLD/NEUTRAL] - [Reason]". This specific format is crucial for the frontend to display it correctly.
+
+When asked for historical price data for a token, use 'token-historical-price' and mention that a chart will be displayed.
+
+**Market Sentiment Analysis (Financial Advisor Role):**
+- When providing data, especially from analytics endpoints (e.g., 'collection-analytics', 'market-insights-analytics', 'market-insights-traders', 'market-insights-holders'), analyze the 'change' and 'trend' percentages/data.
+- If volume, sales, or prices are consistently rising or have a significant positive 'change' percentage over a period, infer a 'bullish' sentiment.
+- If volume, sales, or prices are consistently falling or have a significant negative 'change' percentage, infer a 'bearish' sentiment.
+- If changes are minimal or mixed, infer a 'neutral' or 'stable' sentiment.
+- Always explain *why* you've determined a certain sentiment, referencing the data (e.g., "The market appears bullish, with a 15% increase in volume over the last 24 hours.").
+- Use your financial advisor persona to provide actionable insights based on the sentiment.
+
+**Interactive Button Suggestions:**
+- When you need specific input from the user that can be chosen from a predefined list (e.g., blockchain, time range, type of market insight), phrase your question clearly and list the options.
+- For example, instead of "What blockchain?", say "Which blockchain are you interested in? (e.g., Ethereum, Polygon, Solana)".
+- For time ranges, say "What time range would you like? (e.g., 24h, 7d, 30d)".
+- For market insights, say "What kind of market insights are you looking for? (e.g., Holders, Traders, Analytics)".
+- The frontend will parse these options and present them as buttons. Do not include special formatting for the buttons, just list the options clearly in your natural language response.
 `
 
     let chat = chatSessions.get(sessionId)
@@ -910,61 +960,69 @@ export async function POST(req: NextRequest) {
     let sellersChartData = null // For market traders
     let holdersChartData = null // For market holders
     let whalesChartData = null // For market holders
-    let reportData: any = null // For aggregated detailed reports
+    let reportData = null // For aggregated detailed reports
     let finalText = response.text()
 
     const functionCalls = response.functionCalls()
     if (functionCalls && functionCalls.length > 0) {
       console.log("Chat API: Processing function calls")
 
-      const lastUserMessage = lastMessage.content.toLowerCase()
-      const lastBotMessage = messages[messages.length - 2]?.content.toLowerCase() || ""
-
+      // Handle multiple function calls for a report
       const isDetailedReportRequest =
-        lastUserMessage.includes("detailed report") ||
-        lastUserMessage.includes("full analysis") ||
-        lastUserMessage.includes("full report") ||
-        ((lastUserMessage.includes("yes") ||
-          lastUserMessage.includes("sure") ||
-          lastUserMessage.includes("do it") ||
-          lastUserMessage.includes("more detail")) &&
-          lastBotMessage.includes("detailed report"))
+        lastMessage.content.toLowerCase().includes("detailed report") ||
+        lastMessage.content.toLowerCase().includes("full analysis")
 
       if (isDetailedReportRequest && functionCalls.length > 1) {
         reportData = {}
-        const callPromises = functionCalls.map((functionCall) => {
+        for (const functionCall of functionCalls) {
           if (functionCall.name === "queryNFTData" && functionCall.args.endpoint) {
-            return handleFunctionCall(functionCall.args.endpoint, functionCall.args)
-          }
-          return Promise.resolve(null)
-        })
-
-        const results = await Promise.all(callPromises)
-
-        for (const result of results) {
-          if (result && result.success) {
-            if (result.endpoint.includes("collection/metadata")) reportData.collectionMetadata = result.data
-            if (result.endpoint.includes("collection/analytics")) {
-              reportData.collectionAnalytics = result.data
-              reportData.volumeChartData = result.volumeChartData
-              reportData.salesChartData = result.salesChartData
-              reportData.transactionsChartData = result.transactionsChartData
-              reportData.assetsChartData = result.assetsChartData
+            const result = await handleFunctionCall(functionCall.args.endpoint, functionCall.args)
+            if (result.success) {
+              // Aggregate data based on endpoint
+              if (result.endpoint.includes("metadata")) {
+                reportData.metadata = result.data
+              } else if (result.endpoint.includes("analytics")) {
+                reportData.analytics = result.data
+                reportData.volumeChartData = result.volumeChartData
+                reportData.salesChartData = result.salesChartData
+                reportData.transactionsChartData = result.transactionsChartData
+                reportData.assetsChartData = result.assetsChartData
+              } else if (result.endpoint.includes("scores")) {
+                reportData.scores = result.data
+              } else if (result.endpoint.includes("price_estimate")) {
+                reportData.priceEstimate = result.data
+              } else if (result.endpoint.includes("token-metrics")) {
+                reportData.tokenMetrics = result.data
+              } else if (result.endpoint.includes("token-historical-price")) {
+                reportData.historicalPrice = result.data
+                reportData.chartData = result.chartData
+              } else if (result.endpoint.includes("token-price-prediction")) {
+                reportData.pricePrediction = result.data
+              } else if (result.endpoint.includes("holders")) {
+                reportData.holders = result.data
+                reportData.holdersChartData = result.holdersChartData
+                reportData.whalesChartData = result.whalesChartData
+              } else if (result.endpoint.includes("traders")) {
+                reportData.traders = result.data
+                reportData.tradersChartData = result.tradersChartData
+                reportData.buyersChartData = result.buyersChartData
+                reportData.sellersChartData = result.sellersChartData
+              }
+            } else {
+              console.error(`Error fetching data for report: ${result.error}`)
             }
-            if (result.endpoint.includes("collection/scores")) reportData.collectionScores = result.data
-            if (result.endpoint.includes("collection/whales")) reportData.collectionWhales = result.data
           }
         }
-
+        // Send aggregated report data back to Gemini for final text generation
         const reportSummaryForGemini = `Aggregated report data: ${JSON.stringify(reportData, null, 2)}`
         const summaryResult = await chat.sendMessage([
           {
             functionResponse: {
-              name: "queryNFTData",
+              name: "queryNFTData", // Use a generic name for the aggregated response
               response: {
                 success: true,
                 summary: reportSummaryForGemini,
-                report_data: reportData,
+                report_data: reportData, // Send structured report data
               },
             },
           },
