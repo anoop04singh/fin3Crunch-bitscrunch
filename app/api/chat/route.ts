@@ -446,18 +446,12 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
         }
       }
     } else if (endpoint.includes("whales")) {
-      if (Array.isArray(dataToProcess)) {
-        summary = {
-          total_whales: rawData.pagination?.total_items || dataToProcess.length,
-          top_whales: dataToProcess
-            .slice(0, 3)
-            .map((w: any) => `${w.wallet_address.substring(0, 6)}... (${w.nft_count} NFTs)`)
-            .join(", "),
-        }
-      } else {
-        summary = {
-          total_whales: dataToProcess.total_whales || "N/A",
-        }
+      const whaleData = Array.isArray(dataToProcess) ? dataToProcess[0] : dataToProcess
+      summary = {
+        unique_wallets: whaleData.unique_wallets || "N/A",
+        whale_holders: whaleData.whale_holders || "N/A",
+        buy_whales: whaleData.buy_whales || "N/A",
+        sell_whales: whaleData.sell_whales || "N/A",
       }
     } else if (endpoint.includes("floor-price")) {
       summary = {
@@ -476,24 +470,26 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
         external_url: dataToProcess.external_url || "N/A",
       }
     } else if (endpoint.includes("scores")) {
-      if (Array.isArray(dataToProcess)) {
-        const latestScore = dataToProcess[0] || {}
+      if (endpoint.includes("collection")) {
+        // Collection scores
+        const scoreData = Array.isArray(dataToProcess) ? dataToProcess[0] : dataToProcess
         summary = {
-          rarity_score: latestScore.rarity_score || "N/A",
-          popularity_score: latestScore.popularity_score || "N/A",
-          overall_score: latestScore.token_score || "N/A",
-          price: latestScore.price || "N/A",
+          marketcap: scoreData.marketcap || "N/A",
+          price_avg: scoreData.price_avg || "N/A",
+          price_ceiling: scoreData.price_ceiling || "N/A",
         }
       } else {
+        // NFT scores
+        const scoreData = Array.isArray(dataToProcess) ? dataToProcess[0] : dataToProcess
         summary = {
-          rarity_score: dataToProcess.rarity_score || "N/A",
-          popularity_score: dataToProcess.popularity_score || "N/A",
-          overall_score: dataToProcess.overall_score || "N/A",
+          rarity_score: scoreData.rarity_score || "N/A",
+          popularity_score: scoreData.popularity_score || "N/A",
+          overall_score: scoreData.token_score || "N/A",
         }
       }
     } else if (endpoint.includes("price_estimate")) {
       summary = {
-        estimated_price: dataToProcess.estimated_price || dataToProcess.price || "N/A",
+        price_estimate: dataToProcess.price_estimate || dataToProcess.price || "N/A",
         confidence: dataToProcess.confidence || "N/A",
         currency: dataToProcess.currency || "ETH",
         token_id: dataToProcess.token_id || "N/A",
@@ -834,7 +830,11 @@ export async function POST(req: NextRequest) {
 
     const systemPrompt = `You are an expert Web3 financial advisor and analytics assistant named "fin3Crunch AI". You have access to BitsCrunch APIs for comprehensive NFT/WEB3 data analysis.
 
-You have been provided with comprehensive API documentation. You must analyze it to select the most appropriate endpoints and parameters for the user's query. Pay close attention to required parameters like \`sort_by\` and use the documented default values if the user does not specify a sorting preference. When a user asks about suspicious activity or wash trading, you must use the \`nft-washtrade\` or \`collection-washtrade\` endpoints. If the API returns no wash trading data for the requested timeframe (e.g., 24h), you should inform the user that no activity was detected and suggest they try a longer timeframe, such as '7d' or '30d', to get a broader view. For any endpoint that returns trend data (e.g., \`sales_trend\`, \`volume_trend\`, \`washtrade_assets_trend\`), you must process this data to be displayed as a chart.
+**CRITICAL INSTRUCTION: TOOL USAGE**
+- You MUST use the \`queryNFTData\` tool to answer any user query about NFT or token data.
+- NEVER respond with placeholder text like "[This section will display data...]".
+- When a detailed report is requested, you MUST make all the required function calls simultaneously. Do not explain what you are going to do; just do it by calling the tools.
+- Your final text response should only be generated AFTER all tool calls have been made and their results have been provided back to you.
 
 IMPORTANT PARAMETER RULES:
 - The API uses different parameter names for wallet addresses depending on the endpoint. Be very careful and always use the correct one:
@@ -845,25 +845,6 @@ IMPORTANT PARAMETER RULES:
 - For token-specific endpoints, use "token_address".
 - Common aliases: eth=ethereum, matic=polygon, avax=avalanche, bnb/bsc=binance, sol=solana, btc=bitcoin.
 - Always refer to the function tool schema for the correct parameter name for each endpoint.
-
-When a user asks for a "detailed report" or "full analysis" for an NFT collection or token:
-- Identify the blockchain and contract_address (for NFT collection) or token_address (for token).
-- Make multiple calls to queryNFTData to gather comprehensive data:
-    - For NFT Collection Report:
-        - 'collection-metadata' (for name, symbol, description, image)
-        - 'collection-analytics' (for volume, sales, floor price trends - use '30d' time_range for charts)
-        - 'collection-scores' (for rarity, popularity, overall scores)
-        - 'price_estimate' (for individual NFT price estimate if token_id is provided)
-        - 'liquify-collection-price-estimate' (for collection price estimate)
-        - 'collection-holders' (for holder distribution)
-        - 'collection-traders' (for trader activity)
-        - 'collection-whales' (for whale insights)
-    - For Token Report:
-        - 'token-metrics' (for current price, market cap, holders, score)
-        - 'token-historical-price' (for price chart - use '30d' or '90d' time_range)
-        - 'token-price-prediction' (for estimated price range)
-- Aggregate all this data into a single response structure.
-- Indicate in your response that a detailed report is being generated and will be displayed.
 
 **Detailed Report Generation:**
 - When a user asks for a "detailed report", "full analysis", "more information", or "complete information" about an NFT collection or a specific NFT, you must generate a comprehensive report.
@@ -975,71 +956,53 @@ When asked for historical price data for a token, use 'token-historical-price' a
     let sellersChartData = null // For market traders
     let holdersChartData = null // For market holders
     let whalesChartData = null // For market holders
-    let reportData = null // For aggregated detailed reports
+    let reportData: any = null // For aggregated detailed reports
     let finalText = response.text()
 
     const functionCalls = response.functionCalls()
     if (functionCalls && functionCalls.length > 0) {
       console.log("Chat API: Processing function calls")
 
-      // Handle multiple function calls for a report
       const isDetailedReportRequest =
         lastMessage.content.toLowerCase().includes("detailed report") ||
         lastMessage.content.toLowerCase().includes("full analysis") ||
         lastMessage.content.toLowerCase().includes("more information") ||
         lastMessage.content.toLowerCase().includes("complete information")
 
-      if (isDetailedReportRequest && functionCalls.length > 1) {
-        reportData = {}
-        for (const functionCall of functionCalls) {
-          if (functionCall.name === "queryNFTData" && functionCall.args.endpoint) {
-            const result = await handleFunctionCall(functionCall.args.endpoint, functionCall.args)
-            if (result.success) {
-              // Aggregate data based on endpoint
-              if (result.endpoint.includes("metadata")) {
-                reportData.metadata = result.data
-              } else if (result.endpoint.includes("analytics")) {
-                reportData.analytics = result.data
-                reportData.volumeChartData = result.volumeChartData
-                reportData.salesChartData = result.salesChartData
-                reportData.transactionsChartData = result.transactionsChartData
-                reportData.assetsChartData = result.assetsChartData
-              } else if (result.endpoint.includes("scores")) {
-                reportData.scores = result.data
-              } else if (result.endpoint.includes("price_estimate")) {
-                reportData.priceEstimate = result.data
-              } else if (result.endpoint.includes("token-metrics")) {
-                reportData.tokenMetrics = result.data
-              } else if (result.endpoint.includes("token-historical-price")) {
-                reportData.historicalPrice = result.data
-                reportData.chartData = result.chartData
-              } else if (result.endpoint.includes("token-price-prediction")) {
-                reportData.pricePrediction = result.data
-              } else if (result.endpoint.includes("holders")) {
-                reportData.holders = result.data
-                reportData.holdersChartData = result.holdersChartData
-                reportData.whalesChartData = result.whalesChartData
-              } else if (result.endpoint.includes("traders")) {
-                reportData.traders = result.data
-                reportData.tradersChartData = result.tradersChartData
-                reportData.buyersChartData = result.buyersChartData
-                reportData.sellersChartData = result.sellersChartData
-              }
-            } else {
-              console.error(`Error fetching data for report: ${result.error}`)
-            }
-          }
+      if (isDetailedReportRequest && functionCalls.length > 0) {
+        const reportPromises = functionCalls.map((fc) => handleFunctionCall(fc.args.endpoint, fc.args))
+        const reportResults = await Promise.all(reportPromises)
+
+        const aggregatedReportData: any = {
+          isSpecificNft: functionCalls.some((fc) => fc.args.token_id),
         }
-        // Send aggregated report data back to Gemini for final text generation
+
+        reportResults.forEach((result, index) => {
+          if (result.success) {
+            const endpoint = functionCalls[index].args.endpoint
+            const data = result.data
+
+            if (endpoint === "collection-metadata") aggregatedReportData.collectionMetadata = data
+            if (endpoint === "nft-metadata") aggregatedReportData.nftMetadata = data
+            if (endpoint === "collection-analytics") aggregatedReportData.collectionAnalytics = data
+            if (endpoint === "collection-scores") aggregatedReportData.collectionScores = data
+            if (endpoint === "collection-whales") aggregatedReportData.collectionWhales = data
+            if (endpoint === "nft-price-estimate") aggregatedReportData.nftPriceEstimate = data
+            if (endpoint === "nft-scores") aggregatedReportData.nftScores = data
+          }
+        })
+
+        reportData = aggregatedReportData
+
         const reportSummaryForGemini = `Aggregated report data: ${JSON.stringify(reportData, null, 2)}`
         const summaryResult = await chat.sendMessage([
           {
             functionResponse: {
-              name: "queryNFTData", // Use a generic name for the aggregated response
+              name: "queryNFTData",
               response: {
                 success: true,
                 summary: reportSummaryForGemini,
-                report_data: reportData, // Send structured report data
+                report_data: reportData,
               },
             },
           },
@@ -1055,7 +1018,7 @@ When asked for historical price data for a token, use 'token-historical-price' a
               responseData = {
                 metrics: result.data,
                 endpoint: result.endpoint,
-                parameters: functionCall.args, // Correctly pass args
+                parameters: functionCall.args,
                 detailedData: result.detailedData,
               }
               chartData = result.chartData
