@@ -660,15 +660,21 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
   }
 }
 
-async function callBitsCrunchAPI(endpoint: string, params: Record<string, string>) {
+async function callBitsCrunchAPI(endpoint: string, params: Record<string, any>) {
   const config = API_ENDPOINTS[endpoint as keyof typeof API_ENDPOINTS]
   if (!config) {
     throw new Error(`Unknown endpoint: ${endpoint}`)
   }
 
   const url = new URL(config.url)
+
+  // Ensure blockchain is always set, defaulting to ethereum if not provided
+  if (!params.blockchain) {
+    params.blockchain = "ethereum"
+  }
+
   Object.entries(params).forEach(([key, value]) => {
-    if (value) url.searchParams.set(key, value)
+    if (value) url.searchParams.set(key, String(value))
   })
 
   console.log(`Calling BitsCrunch API URL: ${url.toString()}`)
