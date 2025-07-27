@@ -19,6 +19,7 @@ import { MetricsCard } from "@/components/chat/metrics-card"
 import { DataTable } from "@/components/chat/data-table"
 import { LineChartCard } from "@/components/chat/line-chart-card"
 import { AnimatedSection } from "@/components/animated-section"
+import { motion } from "framer-motion"
 
 interface Message {
   role: "user" | "assistant"
@@ -204,8 +205,11 @@ export default function AgentNetworkPage() {
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
             {messages.map((msg, index) => (
-              <div
+              <motion.div
                 key={index}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
                 className={cn("flex items-start gap-3 w-full", msg.role === "user" ? "justify-end" : "justify-start")}
               >
                 {msg.role === "assistant" && (
@@ -247,7 +251,7 @@ export default function AgentNetworkPage() {
                     <Users className="w-4 h-4" />
                   </div>
                 )}
-              </div>
+              </motion.div>
             ))}
             {isLoading && <div className="flex items-center justify-center py-4">
               <Loader2 className="h-6 w-6 animate-spin text-teal-300" />
