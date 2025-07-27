@@ -8,6 +8,8 @@ import { sleep, cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts"
+import { motion, AnimatePresence } from "framer-motion"
+import { AnimatedSection } from "@/components/animated-section"
 
 // Interfaces
 interface WashTradedCollection {
@@ -207,14 +209,29 @@ export default function WallOfShamePage() {
     </div>
   )
 
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: i * 0.05,
+        duration: 0.5,
+        ease: "easeOut",
+      },
+    }),
+  }
+
   return (
     <div className="p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white tracking-wider">NFT WALL OF SHAME</h1>
-          <p className="text-sm text-neutral-400">Highlighting collections and tokens with high wash trading activity</p>
+      <AnimatedSection>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-white tracking-wider">NFT WALL OF SHAME</h1>
+            <p className="text-sm text-neutral-400">Highlighting collections and tokens with high wash trading activity</p>
+          </div>
         </div>
-      </div>
+      </AnimatedSection>
 
       {loading && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -237,181 +254,198 @@ export default function WallOfShamePage() {
 
       {!loading && !error && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="space-y-4">
+          <AnimatedSection delay={0.1} className="space-y-4">
             <h2 className="text-lg font-semibold text-white">Top Wash-Traded Collections</h2>
             {collections.length > 0 ? (
               collections.map((collection, index) => (
-                <Card
-                  key={collection.contract_address}
-                  className={cn(
-                    "bg-neutral-900 border-2 transition-all duration-300 cursor-pointer transform hover:scale-[1.02]",
-                    getRankClass(index),
-                  )}
-                  onClick={() => handleItemClick(collection)}
-                >
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <div className="text-2xl font-bold text-neutral-600">#{index + 1}</div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-white truncate">{collection.collection_name}</p>
-                      <p className="text-xs text-neutral-500 font-mono truncate">{collection.contract_address}</p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-lg font-bold text-red-400 font-mono">
-                        {formatCurrency(collection.washtrade_volume)}
-                      </p>
-                      <p className="text-xs text-neutral-400">{collection.washtrade_assets} assets</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                <motion.div key={collection.contract_address} custom={index} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.5 }} variants={cardVariants}>
+                  <Card
+                    className={cn(
+                      "bg-neutral-900 border-2 transition-all duration-300 cursor-pointer transform hover:scale-[1.02]",
+                      getRankClass(index),
+                    )}
+                    onClick={() => handleItemClick(collection)}
+                  >
+                    <CardContent className="p-4 flex items-center gap-4">
+                      <div className="text-2xl font-bold text-neutral-600">#{index + 1}</div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-white truncate">{collection.collection_name}</p>
+                        <p className="text-xs text-neutral-500 font-mono truncate">{collection.contract_address}</p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-lg font-bold text-red-400 font-mono">
+                          {formatCurrency(collection.washtrade_volume)}
+                        </p>
+                        <p className="text-xs text-neutral-400">{collection.washtrade_assets} assets</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
               ))
             ) : (
               <p className="text-neutral-500">No wash-traded collections found.</p>
             )}
-          </div>
+          </AnimatedSection>
 
-          <div className="space-y-4">
+          <AnimatedSection delay={0.2} className="space-y-4">
             <h2 className="text-lg font-semibold text-white">Top Wash-Traded NFTs</h2>
             {nfts.length > 0 ? (
               nfts.map((nft, index) => (
-                <Card
-                  key={`${nft.contract_address}-${nft.token_id}`}
-                  className={cn(
-                    "bg-neutral-900 border-2 transition-all duration-300 cursor-pointer transform hover:scale-[1.02]",
-                    getRankClass(index),
-                  )}
-                  onClick={() => handleItemClick(nft)}
-                >
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <img
-                      src={nft.image_url || "/placeholder.svg"}
-                      alt={`${nft.collection_name} #${nft.token_id}`}
-                      className="w-12 h-12 rounded-md object-cover border border-neutral-700 flex-shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-white truncate">{nft.collection_name}</p>
-                      <p className="text-xs text-neutral-400 font-mono">Token ID: {nft.token_id}</p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-lg font-bold text-red-400 font-mono">
-                        {formatCurrency(nft.washtrade_volume)}
-                      </p>
-                      <p className="text-xs text-neutral-400">{nft.washtrade_transactions} transactions</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                <motion.div key={`${nft.contract_address}-${nft.token_id}`} custom={index} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.5 }} variants={cardVariants}>
+                  <Card
+                    className={cn(
+                      "bg-neutral-900 border-2 transition-all duration-300 cursor-pointer transform hover:scale-[1.02]",
+                      getRankClass(index),
+                    )}
+                    onClick={() => handleItemClick(nft)}
+                  >
+                    <CardContent className="p-4 flex items-center gap-4">
+                      <img
+                        src={nft.image_url || "/placeholder.svg"}
+                        alt={`${nft.collection_name} #${nft.token_id}`}
+                        className="w-12 h-12 rounded-md object-cover border border-neutral-700 flex-shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-white truncate">{nft.collection_name}</p>
+                        <p className="text-xs text-neutral-400 font-mono">Token ID: {nft.token_id}</p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-lg font-bold text-red-400 font-mono">
+                          {formatCurrency(nft.washtrade_volume)}
+                        </p>
+                        <p className="text-xs text-neutral-400">{nft.washtrade_transactions} transactions</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
               ))
             ) : (
               <p className="text-neutral-500">No wash-traded NFTs found.</p>
             )}
-          </div>
+          </AnimatedSection>
         </div>
       )}
 
-      {selectedItem && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <Card className="bg-neutral-900 border-neutral-700 w-full max-w-4xl max-h-[90vh] overflow-y-auto animate-scale-in">
-            <CardHeader className="flex flex-row items-center justify-between sticky top-0 bg-neutral-900 z-10">
-              <div>
-                <CardTitle className="text-xl font-bold text-white tracking-wider">
-                  Wash Trade Details: {selectedItem.collection_name}
-                  {"token_id" in selectedItem && ` #${selectedItem.token_id}`}
-                </CardTitle>
-              </div>
-              <Button variant="ghost" onClick={() => setSelectedItem(null)} className="text-neutral-400 hover:text-white">
-                <X className="w-5 h-5" />
-              </Button>
-            </CardHeader>
-            <CardContent className="p-6">
-              {loadingDetails ? (
-                <div className="flex items-center justify-center py-10">
-                  <Loader2 className="h-8 w-8 animate-spin text-teal-500" />
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {detailedData?.metadata && (
-                    <Card className="bg-neutral-800/50 border-neutral-700">
-                      <CardContent className="p-4 flex flex-col md:flex-row items-start gap-4">
-                        <img
-                          src={
-                            detailedData.metadata.image_url ||
-                            ("image_url" in selectedItem && selectedItem.image_url) ||
-                            "/placeholder.svg"
-                          }
-                          alt={detailedData.metadata.collection_name || selectedItem.collection_name}
-                          className="w-full md:w-32 h-auto md:h-32 rounded-lg object-cover border border-neutral-700"
-                        />
-                        <div className="flex-1">
-                          <h3 className="text-lg font-bold text-white">
-                            {detailedData.metadata.collection_name || selectedItem.collection_name}
-                          </h3>
-                          <p className="text-sm text-neutral-400 leading-relaxed mt-2">
-                            {detailedData.metadata.description || "No description available."}
+      <AnimatePresence>
+        {selectedItem && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="w-full max-w-4xl"
+            >
+              <Card className="bg-neutral-900 border-neutral-700 max-h-[90vh] overflow-y-auto custom-scrollbar">
+                <CardHeader className="flex flex-row items-center justify-between sticky top-0 bg-neutral-900 z-10 p-4">
+                  <div>
+                    <CardTitle className="text-xl font-bold text-white tracking-wider">
+                      Wash Trade Details: {selectedItem.collection_name}
+                      {"token_id" in selectedItem && ` #${selectedItem.token_id}`}
+                    </CardTitle>
+                  </div>
+                  <Button variant="ghost" onClick={() => setSelectedItem(null)} className="text-neutral-400 hover:text-white">
+                    <X className="w-5 h-5" />
+                  </Button>
+                </CardHeader>
+                <CardContent className="p-6">
+                  {loadingDetails ? (
+                    <div className="flex items-center justify-center py-10">
+                      <Loader2 className="h-8 w-8 animate-spin text-teal-500" />
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {detailedData?.metadata && (
+                        <Card className="bg-neutral-800/50 border-neutral-700">
+                          <CardContent className="p-4 flex flex-col md:flex-row items-start gap-4">
+                            <img
+                              src={
+                                detailedData.metadata.image_url ||
+                                ("image_url" in selectedItem && selectedItem.image_url) ||
+                                "/placeholder.svg"
+                              }
+                              alt={detailedData.metadata.collection_name || selectedItem.collection_name}
+                              className="w-full md:w-32 h-auto md:h-32 rounded-lg object-cover border border-neutral-700"
+                            />
+                            <div className="flex-1">
+                              <h3 className="text-lg font-bold text-white">
+                                {detailedData.metadata.collection_name || selectedItem.collection_name}
+                              </h3>
+                              <p className="text-sm text-neutral-400 leading-relaxed mt-2">
+                                {detailedData.metadata.description || "No description available."}
+                              </p>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                        <div>
+                          <p className="text-xs text-neutral-400">Wash Trade Volume</p>
+                          <p className="text-xl font-bold text-red-400 font-mono">
+                            {formatCurrency(detailedData?.metrics?.washtrade_volume ?? 0)}
                           </p>
                         </div>
-                      </CardContent>
-                    </Card>
-                  )}
+                        <div>
+                          <p className="text-xs text-neutral-400">Wash Traded Assets</p>
+                          <p className="text-xl font-bold text-white font-mono">
+                            {detailedData?.metrics?.washtrade_assets ?? "N/A"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-neutral-400">Suspect Sales</p>
+                          <p className="text-xl font-bold text-white font-mono">
+                            {detailedData?.metrics?.washtrade_suspect_sales ?? "N/A"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-neutral-400">Involved Wallets</p>
+                          <p className="text-xl font-bold text-white font-mono">
+                            {detailedData?.metrics?.washtrade_wallets ?? "N/A"}
+                          </p>
+                        </div>
+                      </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                    <div>
-                      <p className="text-xs text-neutral-400">Wash Trade Volume</p>
-                      <p className="text-xl font-bold text-red-400 font-mono">
-                        {formatCurrency(detailedData?.metrics?.washtrade_volume ?? 0)}
-                      </p>
+                      {detailedData?.trends && detailedData.trends.length > 0 && (
+                        <Card className="bg-neutral-800/50 border-neutral-700">
+                          <CardHeader>
+                            <CardTitle className="text-sm font-medium text-neutral-300 tracking-wider flex items-center gap-2">
+                              <BarChart4 className="w-4 h-4" /> 24-Hour Wash Trade Trends
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                            {["volume", "assets", "sales", "wallets"].map((key) => (
+                              <div key={key}>
+                                <h3 className="text-sm font-medium text-white mb-2 capitalize">{key} Trend</h3>
+                                <ChartContainer config={{}} className="h-[150px] w-full">
+                                  <ResponsiveContainer>
+                                    <LineChart data={detailedData.trends} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                                      <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={10} />
+                                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} />
+                                      <ChartTooltip content={<ChartTooltipContent />} />
+                                      <Line type="monotone" dataKey={key} stroke="hsl(var(--chart-4))" dot={false} />
+                                    </LineChart>
+                                  </ResponsiveContainer>
+                                </ChartContainer>
+                              </div>
+                            ))}
+                          </CardContent>
+                        </Card>
+                      )}
                     </div>
-                    <div>
-                      <p className="text-xs text-neutral-400">Wash Traded Assets</p>
-                      <p className="text-xl font-bold text-white font-mono">
-                        {detailedData?.metrics?.washtrade_assets ?? "N/A"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-neutral-400">Suspect Sales</p>
-                      <p className="text-xl font-bold text-white font-mono">
-                        {detailedData?.metrics?.washtrade_suspect_sales ?? "N/A"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-neutral-400">Involved Wallets</p>
-                      <p className="text-xl font-bold text-white font-mono">
-                        {detailedData?.metrics?.washtrade_wallets ?? "N/A"}
-                      </p>
-                    </div>
-                  </div>
-
-                  {detailedData?.trends && detailedData.trends.length > 0 && (
-                    <Card className="bg-neutral-800/50 border-neutral-700">
-                      <CardHeader>
-                        <CardTitle className="text-sm font-medium text-neutral-300 tracking-wider flex items-center gap-2">
-                          <BarChart4 className="w-4 h-4" /> 24-Hour Wash Trade Trends
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-                        {["volume", "assets", "sales", "wallets"].map((key) => (
-                          <div key={key}>
-                            <h3 className="text-sm font-medium text-white mb-2 capitalize">{key} Trend</h3>
-                            <ChartContainer config={{}} className="h-[150px] w-full">
-                              <ResponsiveContainer>
-                                <LineChart data={detailedData.trends} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                                  <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                                  <ChartTooltip content={<ChartTooltipContent />} />
-                                  <Line type="monotone" dataKey={key} stroke="hsl(var(--chart-4))" dot={false} />
-                                </LineChart>
-                              </ResponsiveContainer>
-                            </ChartContainer>
-                          </div>
-                        ))}
-                      </CardContent>
-                    </Card>
                   )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
+                </CardContent>
+              </Card>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
