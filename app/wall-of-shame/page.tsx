@@ -359,30 +359,28 @@ export default function WallOfShamePage() {
                       <Loader2 className="h-8 w-8 animate-spin text-teal-500" />
                     </div>
                   ) : (
-                    <div className="space-y-6">
+                    <div className="space-y-8">
                       {detailedData?.metadata && (
                         <AnimatedSection delay={0.1}>
-                          <Card className="bg-neutral-800/50 border-neutral-700">
-                            <CardContent className="p-4 flex flex-col md:flex-row items-start gap-4">
-                              <img
-                                src={
-                                  detailedData.metadata.image_url ||
-                                  ("image_url" in selectedItem && selectedItem.image_url) ||
-                                  "/placeholder.svg"
-                                }
-                                alt={detailedData.metadata.collection_name || selectedItem.collection_name}
-                                className="w-full md:w-32 h-auto md:h-32 rounded-lg object-cover border border-neutral-700"
-                              />
-                              <div className="flex-1">
-                                <h3 className="text-lg font-bold text-white">
-                                  {detailedData.metadata.collection_name || selectedItem.collection_name}
-                                </h3>
-                                <p className="text-sm text-neutral-400 leading-relaxed mt-2">
-                                  {detailedData.metadata.description || "No description available."}
-                                </p>
-                              </div>
-                            </CardContent>
-                          </Card>
+                          <div className="flex flex-col md:flex-row items-start gap-6">
+                            <img
+                              src={
+                                detailedData.metadata.image_url ||
+                                ("image_url" in selectedItem && selectedItem.image_url) ||
+                                "/placeholder.svg"
+                              }
+                              alt={detailedData.metadata.collection_name || selectedItem.collection_name}
+                              className="w-full md:w-32 h-auto md:h-32 rounded-lg object-cover border border-neutral-700 flex-shrink-0"
+                            />
+                            <div className="flex-1">
+                              <h3 className="text-lg font-bold text-white">
+                                {detailedData.metadata.collection_name || selectedItem.collection_name}
+                              </h3>
+                              <p className="text-sm text-neutral-400 leading-relaxed mt-2">
+                                {detailedData.metadata.description || "No description available."}
+                              </p>
+                            </div>
+                          </div>
                         </AnimatedSection>
                       )}
 
@@ -417,31 +415,25 @@ export default function WallOfShamePage() {
 
                       {detailedData?.trends && detailedData.trends.length > 0 && (
                         <AnimatedSection delay={0.3}>
-                          <Card className="bg-neutral-800/50 border-neutral-700">
-                            <CardHeader>
-                              <CardTitle className="text-sm font-medium text-neutral-300 tracking-wider flex items-center gap-2">
-                                <BarChart4 className="w-4 h-4" /> 24-Hour Wash Trade Trends
-                              </CardTitle>
-                            </CardHeader>
-                            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-                              {["volume", "assets", "sales", "wallets"].map((key) => (
-                                <div key={key}>
-                                  <h3 className="text-sm font-medium text-white mb-2 capitalize">{key} Trend</h3>
-                                  <ChartContainer config={{}} className="h-[150px] w-full">
-                                    <ResponsiveContainer>
-                                      <LineChart data={detailedData.trends} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                                        <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                                        <ChartTooltip content={<ChartTooltipContent />} />
-                                        <Line type="monotone" dataKey={key} stroke="hsl(var(--chart-4))" dot={false} />
-                                      </LineChart>
-                                    </ResponsiveContainer>
-                                  </ChartContainer>
-                                </div>
-                              ))}
-                            </CardContent>
-                          </Card>
+                          <h3 className="text-2xl font-bold text-white mb-6 text-center">24-Hour Wash Trade Trends</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            {["volume", "assets", "sales", "wallets"].map((key) => (
+                              <div key={key} className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-4">
+                                <h4 className="text-base font-medium text-white mb-4 capitalize text-center">{key} Trend</h4>
+                                <ChartContainer config={{}} className="h-[150px] w-full">
+                                  <ResponsiveContainer>
+                                    <LineChart data={detailedData.trends} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                                      <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={10} />
+                                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} />
+                                      <ChartTooltip content={<ChartTooltipContent />} />
+                                      <Line type="monotone" dataKey={key} stroke="hsl(var(--chart-4))" dot={false} />
+                                    </LineChart>
+                                  </ResponsiveContainer>
+                                </ChartContainer>
+                              </div>
+                            ))}
+                          </div>
                         </AnimatedSection>
                       )}
                     </div>
