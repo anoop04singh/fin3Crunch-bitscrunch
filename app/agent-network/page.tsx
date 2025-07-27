@@ -20,6 +20,7 @@ import { DataTable } from "@/components/chat/data-table"
 import { LineChartCard } from "@/components/chat/line-chart-card"
 import { AnimatedSection } from "@/components/animated-section"
 import { motion } from "framer-motion"
+import { ReportCard } from "@/components/chat/report-card"
 
 interface Message {
   role: "user" | "assistant"
@@ -233,6 +234,7 @@ export default function AgentNetworkPage() {
                       {msg.recommendation && <RecommendationCard recommendation={msg.recommendation} />}
                       {msg.data?.metrics && <MetricsCard metrics={msg.data.metrics} />}
                       {msg.data?.detailedData && <DataTable data={msg.data.detailedData} title="Top Deals" />}
+                      {msg.reportData && <ReportCard reportData={msg.reportData} />}
                       {msg.chartData && <LineChartCard data={msg.chartData} title="Price History" dataKey="price" color="hsl(var(--chart-1))" />}
                       {msg.volumeChartData && <LineChartCard data={msg.volumeChartData} title="Volume Trend" dataKey="value" color="hsl(var(--chart-2))" />}
                       {msg.salesChartData && <LineChartCard data={msg.salesChartData} title="Sales Trend" dataKey="value" color="hsl(var(--chart-3))" />}

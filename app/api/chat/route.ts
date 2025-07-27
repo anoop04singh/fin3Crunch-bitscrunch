@@ -828,7 +828,7 @@ export async function POST(req: NextRequest) {
     // Initialize Gemini AI
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY)
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
+      model: "gemini-1.5-flash",
       tools: [{ functionDeclarations: [nftQueryFunction] }],
     })
 
@@ -845,15 +845,6 @@ IMPORTANT PARAMETER RULES:
 - For token-specific endpoints, use "token_address".
 - Common aliases: eth=ethereum, matic=polygon, avax=avalanche, bnb/bsc=binance, sol=solana, btc=bitcoin.
 - Always refer to the function tool schema for the correct parameter name for each endpoint.
-
-When a user asks about NFT or Token data:
-1. Determine which API endpoint is most appropriate.
-2. **Proactive Suggestions:** If a user asks for general NFT investment advice, "what to buy", or "good NFTs to invest in" without specifying a collection, proactively use the \`nft-top-deals\` endpoint to show them current opportunities. This is more helpful than asking them to be more specific.
-3. Extract required parameters from their query.
-4. If you have previously provided a list of items (e.g., top deals, collections) and the user asks for more details about one of those items, first check your conversation history for the contract_address and blockchain of that specific item. If found, use those details directly without asking the user again.
-5. If required parameters are missing and not found in history, ask the user to provide them.
-6. Use the queryNFTData function to fetch the data.
-7. Present the results in a clear, user-friendly format.
 
 When a user asks for a "detailed report" or "full analysis" for an NFT collection or token:
 - Identify the blockchain and contract_address (for NFT collection) or token_address (for token).
@@ -873,6 +864,30 @@ When a user asks for a "detailed report" or "full analysis" for an NFT collectio
         - 'token-price-prediction' (for estimated price range)
 - Aggregate all this data into a single response structure.
 - Indicate in your response that a detailed report is being generated and will be displayed.
+
+**Detailed Report Generation:**
+- When a user asks for a "detailed report", "full analysis", "more information", or "complete information" about an NFT collection or a specific NFT, you must generate a comprehensive report.
+- To do this, you will make multiple, simultaneous function calls to \`queryNFTData\` to gather all necessary data points.
+- **For a Collection Report (or base for a specific NFT):**
+  - \`collection-metadata\`
+  - \`collection-analytics\` (use \`time_range: "30d"\`)
+  - \`collection-scores\` (use \`time_range: "30d"\`)
+  - \`collection-whales\` (use \`time_range: "30d"\`)
+- **If a \`token_id\` is also provided for a Specific NFT Report, add these calls:**
+  - \`nft-metadata\`
+  - \`nft-price-estimate\`
+  - \`nft-scores\`
+- After gathering all data, you will receive an aggregated summary. Your final response to the user should be a cohesive summary based on all the fetched data points, mentioning that a detailed report is being displayed.
+
+When a user asks about NFT or Token data:
+1.  First, provide the metadata using the 'nft-metadata' or 'collection-metadata' endpoint.
+2.  If the user asks for specific information, find the most appropriate endpoint and retrieve the data.
+3.  **Proactive Suggestions:** If a user asks for general NFT investment advice, "what to buy", or "good NFTs to invest in" without specifying a collection, proactively use the \`nft-top-deals\` endpoint to show them current opportunities. This is more helpful than asking them to be more specific.
+4.  Extract required parameters from their query.
+5.  If you have previously provided a list of items (e.g., top deals, collections) and the user asks for more details about one of those items, first check your conversation history for the contract_address and blockchain of that specific item. If found, use those details directly without asking the user again.
+6.  If required parameters are missing and not found in history, ask the user to provide them.
+7.  Use the queryNFTData function to fetch the data.
+8.  Present the results in a clear, user-friendly format.
 
 For investment or buy/sell recommendations for NFTs:
 - If a user asks "Should I invest in X NFT?" or "Is X NFT a good buy/sell?", first fetch the current floor price using 'collection-floor-price' and then the estimated price using 'price_estimate' (for individual NFTs) or 'liquify-collection-price-estimate' (for collections).
@@ -970,7 +985,9 @@ When asked for historical price data for a token, use 'token-historical-price' a
       // Handle multiple function calls for a report
       const isDetailedReportRequest =
         lastMessage.content.toLowerCase().includes("detailed report") ||
-        lastMessage.content.toLowerCase().includes("full analysis")
+        lastMessage.content.toLowerCase().includes("full analysis") ||
+        lastMessage.content.toLowerCase().includes("more information") ||
+        lastMessage.content.toLowerCase().includes("complete information")
 
       if (isDetailedReportRequest && functionCalls.length > 1) {
         reportData = {}
