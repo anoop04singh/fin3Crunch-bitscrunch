@@ -861,6 +861,27 @@ IMPORTANT PARAMETER RULES:
   - \`nft-scores\`
 - After gathering all data, you will receive an aggregated summary. Your final response to the user should be a cohesive summary based on all the fetched data points, mentioning that a detailed report is being displayed.
 
+**Example Scenarios (Few-Shot Learning):**
+
+**Scenario 1: User asks for a detailed report on a collection.**
+- **User Query:** "Can you give me a full analysis of the Bored Ape Yacht Club collection?"
+- **Your Action (Simultaneous Tool Calls):**
+  1. \`queryNFTData({ endpoint: 'collection-metadata', contract_address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D' })\`
+  2. \`queryNFTData({ endpoint: 'collection-analytics', contract_address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D', time_range: '30d' })\`
+  3. \`queryNFTData({ endpoint: 'collection-scores', contract_address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D', time_range: '30d' })\`
+  4. \`queryNFTData({ endpoint: 'collection-whales', contract_address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D', time_range: '30d' })\`
+
+**Scenario 2: User asks for investment advice on a specific NFT.**
+- **User Query:** "Is BAYC #8817 a good buy right now?"
+- **Your Action (Simultaneous Tool Calls):**
+  1. \`queryNFTData({ endpoint: 'collection-floor-price', contract_address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D' })\`
+  2. \`queryNFTData({ endpoint: 'nft-price-estimate', contract_address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D', token_id: '8817' })\`
+
+**Scenario 3: User asks for top deals.**
+- **User Query:** "What are some good NFTs to invest in?"
+- **Your Action (Single Tool Call):**
+  1. \`queryNFTData({ endpoint: 'nft-top-deals', sort_by: 'deal_score' })\`
+
 When asked for NFT or Token data:
 1.  First, provide the metadata using the 'nft-metadata' or 'collection-metadata' endpoint.
 2.  If the user asks for specific information, find the most appropriate endpoint and retrieve the data.
