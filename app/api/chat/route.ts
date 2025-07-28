@@ -244,6 +244,83 @@ const queryNFTDataSchema = z.discriminatedUnion("endpoint", [
   z.object({ endpoint: z.literal("marketplace-traders"), time_range: z.string().optional(), sort_by: z.string().optional(), blockchain: z.string().optional() }),
 ])
 
+const queryNFTDataFunction = {
+  name: "queryNFTData",
+  description: "Query a single, specific metric for an NFT, collection, or token using a specific BitsCrunch API endpoint.",
+  parameters: {
+    type: "object",
+    properties: {
+      endpoint: {
+        type: "string",
+        enum: Object.keys(API_ENDPOINTS), // Dynamically get all endpoint names
+        description: "The specific API endpoint to call for a single piece of data.",
+      },
+      blockchain: {
+        type: "string",
+        enum: SUPPORTED_BLOCKCHAINS,
+        description: "Blockchain name (e.g., ethereum, polygon).",
+      },
+      contract_address: {
+        type: "string",
+        description: "NFT collection contract address.",
+      },
+      token_id: {
+        type: "string",
+        description: "Specific NFT token ID.",
+      },
+      wallet_address: {
+        type: "string",
+        description: "User's wallet address for wallet-specific endpoints.",
+      },
+      wallet: {
+        type: "string",
+        description: "User's wallet address for 'wallet-metrics' and 'wallet-balance-nft'.",
+      },
+      address: {
+        type: "string",
+        description: "User's wallet address for 'wallet-balance-token' and 'token-balance'.",
+      },
+      token_address: {
+        type: "string",
+        description: "ERC20 token address.",
+      },
+      time_range: {
+        type: "string",
+        enum: TIME_RANGES,
+        description: "Time range for analytics.",
+      },
+      sort_by: {
+        type: "string",
+        description: "Field to sort results by.",
+      },
+    },
+    required: ["endpoint"],
+  },
+}
+
+const generateDetailedReportFunction = {
+  name: "generateDetailedReport",
+  description: "Generates a comprehensive report for an NFT collection or a specific NFT. Use this for broad requests like 'give me a full analysis', 'detailed report', or 'tell me everything about...'. This tool fetches all necessary data in one go.",
+  parameters: {
+    type: "object",
+    properties: {
+      contract_address: {
+        type: "string",
+        description: "The contract address of the NFT collection.",
+      },
+      token_id: {
+        type: "string",
+        description: "The specific token ID for an individual NFT report. Optional.",
+      },
+      blockchain: {
+        type: "string",
+        description: "The blockchain of the collection. Defaults to 'ethereum' if not provided.",
+      },
+    },
+    required: ["contract_address"],
+  },
+}
+
 function normalizeBlockchainName(blockchain: string): string {
   const normalized = blockchain.toLowerCase()
   if (BLOCKCHAIN_ALIASES[normalized]) {

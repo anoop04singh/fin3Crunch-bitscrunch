@@ -202,10 +202,17 @@ export async function POST(req: NextRequest) {
     })
 
     if (!response.ok) {
-      const errorData = await response.json()
-      console.error(`UnleashNFTs API error for ${endpoint} (Status: ${response.status}):`, errorData)
+      let errorDetails
+      try {
+        // Try to parse as JSON first
+        errorDetails = await response.json()
+      } catch (e) {
+        // If that fails, it's likely not JSON, so read as text
+        errorDetails = await response.text()
+      }
+      console.error(`UnleashNFTs API error for ${endpoint} (Status: ${response.status}):`, errorDetails)
       return NextResponse.json(
-        { error: `Failed to fetch data from UnleashNFTs API: ${response.statusText}`, details: errorData },
+        { error: `Failed to fetch data from UnleashNFTs API: ${response.statusText}`, details: errorDetails },
         { status: response.status },
       )
     }
