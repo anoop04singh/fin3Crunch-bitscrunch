@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { GoogleGenerativeAI } from "@google/generative-ai"
+import { z } from "zod"
 
 const BITSCRUNCH_API_KEY = process.env.BITSCRUNCH_API_KEY
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY
@@ -201,6 +202,47 @@ const BLOCKCHAIN_ALIASES: { [key: string]: string } = {
 }
 
 const TIME_RANGES = ["15m", "24h", "7d", "30d", "90d", "all"]
+
+// Zod Schemas for Validation
+const generateDetailedReportSchema = z.object({
+  contract_address: z.string({ required_error: "A contract_address is required for a detailed report." }),
+  token_id: z.string().optional(),
+  blockchain: z.string().optional(),
+})
+
+const queryNFTDataSchema = z.discriminatedUnion("endpoint", [
+  z.object({ endpoint: z.literal("token-balance"), address: z.string(), token_address: z.string().optional(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("token-metrics"), token_address: z.string(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("token-price-prediction"), token_address: z.string() }),
+  z.object({ endpoint: z.literal("token-dex-price"), token_address: z.string(), time_range: z.string().optional(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("token-historical-price"), token_address: z.string(), time_range: z.string(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("wallet-balance-nft"), wallet: z.string(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("wallet-balance-token"), address: z.string(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("wallet-score"), wallet_address: z.string() }),
+  z.object({ endpoint: z.literal("wallet-metrics"), wallet: z.string(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("nft-metadata"), contract_address: z.string(), token_id: z.string(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("nft-analytics"), contract_address: z.string(), token_id: z.string().optional(), sort_by: z.string().optional(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("nft-scores"), contract_address: z.string(), token_id: z.string().optional(), sort_by: z.string().optional(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("nft-washtrade"), contract_address: z.string(), token_id: z.string().optional(), sort_by: z.string().optional(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("nft-top-deals"), sort_by: z.string().optional() }),
+  z.object({ endpoint: z.literal("nft-price-estimate"), contract_address: z.string(), token_id: z.string(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("collection-metadata"), contract_address: z.string(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("collection-owner"), contract_address: z.string(), sort_by: z.string().optional(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("collection-analytics"), contract_address: z.string(), time_range: z.string().optional(), sort_by: z.string().optional(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("collection-holders"), contract_address: z.string(), time_range: z.string().optional(), sort_by: z.string().optional(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("collection-scores"), contract_address: z.string(), time_range: z.string().optional(), sort_by: z.string().optional(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("collection-washtrade"), contract_address: z.string(), time_range: z.string().optional(), sort_by: z.string().optional(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("collection-whales"), contract_address: z.string(), time_range: z.string().optional(), sort_by: z.string().optional(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("collection-floor-price"), contract_address: z.string(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("collection-price-estimate"), contract_address: z.string(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("market-insights-analytics"), time_range: z.string().optional(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("market-insights-holders"), time_range: z.string().optional(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("market-insights-traders"), time_range: z.string().optional(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("market-insights-washtrade"), time_range: z.string().optional(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("marketplace-analytics"), time_range: z.string().optional(), sort_by: z.string().optional(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("marketplace-holders"), time_range: z.string().optional(), sort_by: z.string().optional(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("marketplace-traders"), time_range: z.string().optional(), sort_by: z.string().optional(), blockchain: z.string().optional() }),
+])
 
 function normalizeBlockchainName(blockchain: string): string {
   const normalized = blockchain.toLowerCase()
@@ -688,89 +730,30 @@ async function callBitsCrunchAPI(endpoint: string, params: Record<string, string
   return data
 }
 
-const queryNFTDataFunction = {
-  name: "queryNFTData",
-  description: "Query a single, specific metric for an NFT, collection, or token using a specific BitsCrunch API endpoint.",
-  parameters: {
-    type: "object",
-    properties: {
-      endpoint: {
-        type: "string",
-        enum: Object.keys(API_ENDPOINTS), // Dynamically get all endpoint names
-        description: "The specific API endpoint to call for a single piece of data.",
-      },
-      blockchain: {
-        type: "string",
-        enum: SUPPORTED_BLOCKCHAINS,
-        description: "Blockchain name (e.g., ethereum, polygon).",
-      },
-      contract_address: {
-        type: "string",
-        description: "NFT collection contract address.",
-      },
-      token_id: {
-        type: "string",
-        description: "Specific NFT token ID.",
-      },
-      wallet_address: {
-        type: "string",
-        description: "User's wallet address for wallet-specific endpoints.",
-      },
-      wallet: {
-        type: "string",
-        description: "User's wallet address for 'wallet-metrics' and 'wallet-balance-nft'.",
-      },
-      address: {
-        type: "string",
-        description: "User's wallet address for 'wallet-balance-token' and 'token-balance'.",
-      },
-      token_address: {
-        type: "string",
-        description: "ERC20 token address.",
-      },
-      time_range: {
-        type: "string",
-        enum: TIME_RANGES,
-        description: "Time range for analytics.",
-      },
-      sort_by: {
-        type: "string",
-        description: "Field to sort results by.",
-      },
-    },
-    required: ["endpoint"],
-  },
-}
-
-const generateDetailedReportFunction = {
-  name: "generateDetailedReport",
-  description: "Generates a comprehensive report for an NFT collection or a specific NFT. Use this for broad requests like 'give me a full analysis', 'detailed report', or 'tell me everything about...'. This tool fetches all necessary data in one go.",
-  parameters: {
-    type: "object",
-    properties: {
-      contract_address: {
-        type: "string",
-        description: "The contract address of the NFT collection.",
-      },
-      token_id: {
-        type: "string",
-        description: "The specific token ID for an individual NFT report. Optional.",
-      },
-      blockchain: {
-        type: "string",
-        description: "The blockchain of the collection. Defaults to 'ethereum' if not provided.",
-      },
-    },
-    required: ["contract_address"],
-  },
-}
-
 // Store chat sessions in memory (in production, use Redis or database)
 const chatSessions = new Map()
 
 async function handleFunctionCall(functionCall: { name: string; args: Record<string, any> }) {
   const { name, args } = functionCall
   console.log(`Handling function call for: ${name} with args:`, JSON.stringify(args, null, 2))
+
+  // VALIDATION STEP
+  if (name === "generateDetailedReport") {
+    const validation = generateDetailedReportSchema.safeParse(args)
+    if (!validation.success) {
+      const errorMessage = `Invalid parameters for generateDetailedReport: ${JSON.stringify(validation.error.flatten().fieldErrors)}`
+      console.error(errorMessage)
+      return { success: false, error: errorMessage }
+    }
+  } else if (name === "queryNFTData") {
+    const validation = queryNFTDataSchema.safeParse(args)
+    if (!validation.success) {
+      const errorMessage = `Invalid parameters for queryNFTData endpoint ${args.endpoint}: ${JSON.stringify(validation.error.flatten().fieldErrors)}`
+      console.error(errorMessage)
+      return { success: false, error: errorMessage }
+    }
+  }
+  // END VALIDATION STEP
 
   if (name === "generateDetailedReport") {
     const { contract_address, token_id, blockchain } = args
@@ -880,6 +863,7 @@ export async function POST(req: NextRequest) {
 - You MUST use the provided tools to answer any user query about NFT or token data.
 - NEVER respond with placeholder text like "[This section will display data...]".
 - Your final text response should only be generated AFTER all tool calls have been made and their results have been provided back to you.
+- Your tool calls will be validated against a schema; if you receive a validation error, analyze it and correct your parameters for the next call.
 
 **Tool Selection Guide:**
 - For simple, direct questions about a single metric (e.g., "what's the floor price?", "get me the metadata"), use the \`queryNFTData\` tool with the most specific endpoint.
