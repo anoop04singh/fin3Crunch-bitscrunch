@@ -580,7 +580,8 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
       }
     } else if (endpoint.includes("metadata")) {
       summary = {
-        name: dataToProcess.collection || dataToProcess.name || "N/A",
+        name: dataToProcess.collection_name || dataToProcess.name || "N/A",
+        token_id: dataToProcess.token_id || "N/A",
         symbol: dataToProcess.symbol || "N/A",
         total_supply: dataToProcess.distinct_nft_count || dataToProcess.total_supply || "N/A",
         description: dataToProcess.description || "N/A",
@@ -833,7 +834,7 @@ async function handleFunctionCall(functionCall: { name: string; args: Record<str
   // END VALIDATION STEP
 
   if (name === "generateDetailedReport") {
-    const { contract_address, token_id, blockchain } = args
+    const { contract_address, token_id, blockchain = "ethereum" } = args
     const isSpecificNft = !!token_id
 
     const apiCalls: { key: string; endpoint: string; params: any }[] = [
@@ -871,7 +872,11 @@ async function handleFunctionCall(functionCall: { name: string; args: Record<str
   }
 
   if (name === "queryNFTData") {
-    const { endpoint, ...params } = args
+    const { endpoint, ...rawParams } = args
+    const params = {
+      blockchain: "ethereum",
+      ...rawParams,
+    }
     try {
       const rawData = await callBitsCrunchAPI(endpoint, params)
       const processedData = processAndSummarizeData(rawData, endpoint)
