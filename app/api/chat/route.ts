@@ -688,116 +688,161 @@ async function callBitsCrunchAPI(endpoint: string, params: Record<string, string
   return data
 }
 
-const nftQueryFunction = {
+const queryNFTDataFunction = {
   name: "queryNFTData",
-  description: "Query NFT or Token data using BitsCrunch APIs",
+  description: "Query a single, specific metric for an NFT, collection, or token using a specific BitsCrunch API endpoint.",
   parameters: {
     type: "object",
     properties: {
       endpoint: {
         type: "string",
         enum: Object.keys(API_ENDPOINTS), // Dynamically get all endpoint names
-        description: "The API endpoint to call",
+        description: "The specific API endpoint to call for a single piece of data.",
       },
       blockchain: {
         type: "string",
         enum: SUPPORTED_BLOCKCHAINS,
-        description: "Blockchain name (ethereum, polygon, avalanche, binance, solana, etc.)",
+        description: "Blockchain name (e.g., ethereum, polygon).",
       },
       contract_address: {
         type: "string",
-        description: "NFT collection contract address",
+        description: "NFT collection contract address.",
       },
       token_id: {
         type: "string",
-        description: "Specific NFT token ID",
+        description: "Specific NFT token ID.",
       },
       wallet_address: {
         type: "string",
-        description: "The user's wallet address (e.g. 0x...). Use for endpoints like wallet-score, wallet-analytics.",
+        description: "User's wallet address for wallet-specific endpoints.",
       },
       wallet: {
         type: "string",
-        description: "The user's wallet address (e.g. 0x...). Note: Use this parameter name for 'wallet-metrics' and 'wallet-balance-nft' endpoints.",
+        description: "User's wallet address for 'wallet-metrics' and 'wallet-balance-nft'.",
       },
       address: {
         type: "string",
-        description: "The user's wallet address (e.g. 0x...). Note: Use this parameter name for 'wallet-balance-token' and 'token-balance' endpoints.",
+        description: "User's wallet address for 'wallet-balance-token' and 'token-balance'.",
       },
       token_address: {
         type: "string",
-        description: "ERC20 token address for token-specific queries",
+        description: "ERC20 token address.",
       },
       time_range: {
         type: "string",
-        enum: ["15m", "24h", "7d", "30d", "90d", "all"],
-        description: "Time range for analytics",
-      },
-      limit: {
-        type: "number",
-        description: "Number of items to return for paginated results (e.g., holders, transactions)",
-      },
-      offset: {
-        type: "number",
-        description: "Offset for pagination",
-      },
-      threshold: {
-        type: "number",
-        description: "Minimum NFTs to be considered a whale",
-      },
-      type: {
-        type: "string",
-        enum: ["buy", "sell", "mint", "transfer"], // Example types, adjust as per actual API
-        description: "Type of transaction (buy, sell, mint, transfer)",
+        enum: TIME_RANGES,
+        description: "Time range for analytics.",
       },
       sort_by: {
         type: "string",
-        description:
-          "Field to sort results by (e.g., 'deal_score', 'rarity_score', 'volume_usd', 'balance', 'timestamp')",
-      },
-      sort_order: {
-        type: "string",
-        enum: ["asc", "desc"],
-        description: "Sort order (ascending or descending)",
+        description: "Field to sort results by.",
       },
     },
     required: ["endpoint"],
   },
 }
 
+const generateDetailedReportFunction = {
+  name: "generateDetailedReport",
+  description: "Generates a comprehensive report for an NFT collection or a specific NFT. Use this for broad requests like 'give me a full analysis', 'detailed report', or 'tell me everything about...'. This tool fetches all necessary data in one go.",
+  parameters: {
+    type: "object",
+    properties: {
+      contract_address: {
+        type: "string",
+        description: "The contract address of the NFT collection.",
+      },
+      token_id: {
+        type: "string",
+        description: "The specific token ID for an individual NFT report. Optional.",
+      },
+      blockchain: {
+        type: "string",
+        description: "The blockchain of the collection. Defaults to 'ethereum' if not provided.",
+      },
+    },
+    required: ["contract_address"],
+  },
+}
+
 // Store chat sessions in memory (in production, use Redis or database)
 const chatSessions = new Map()
 
-async function handleFunctionCall(endpoint: string, args: Record<string, any>) {
-  console.log(`Handling function call for endpoint: ${endpoint} with args:`, JSON.stringify(args, null, 2))
-  try {
-    const rawData = await callBitsCrunchAPI(endpoint, args)
-    const processedData = processAndSummarizeData(rawData, endpoint)
+async function handleFunctionCall(functionCall: { name: string; args: Record<string, any> }) {
+  const { name, args } = functionCall
+  console.log(`Handling function call for: ${name} with args:`, JSON.stringify(args, null, 2))
+
+  if (name === "generateDetailedReport") {
+    const { contract_address, token_id, blockchain } = args
+    const isSpecificNft = !!token_id
+
+    const apiCalls: { key: string; endpoint: string; params: any }[] = [
+      { key: "collectionMetadata", endpoint: "collection-metadata", params: { contract_address, blockchain } },
+      { key: "collectionAnalytics", endpoint: "collection-analytics", params: { contract_address, blockchain, time_range: "30d" } },
+      { key: "collectionScores", endpoint: "collection-scores", params: { contract_address, blockchain, time_range: "30d" } },
+      { key: "collectionWhales", endpoint: "collection-whales", params: { contract_address, blockchain, time_range: "30d" } },
+    ]
+
+    if (isSpecificNft) {
+      apiCalls.push(
+        { key: "nftMetadata", endpoint: "nft-metadata", params: { contract_address, token_id, blockchain } },
+        { key: "nftPriceEstimate", endpoint: "nft-price-estimate", params: { contract_address, token_id, blockchain } },
+        { key: "nftScores", endpoint: "nft-scores", params: { contract_address, token_id, blockchain } },
+      )
+    }
+
+    const promises = apiCalls.map(call => callBitsCrunchAPI(call.endpoint, call.params).catch(e => ({ error: e.message, endpoint: call.endpoint })));
+    const results = await Promise.all(promises);
+
+    const aggregatedReportData: any = { isSpecificNft };
+    results.forEach((result, index) => {
+      const key = apiCalls[index].key;
+      if (result && !result.error) {
+        aggregatedReportData[key] = processAndSummarizeData(result, apiCalls[index].endpoint).summary;
+      } else {
+        console.error(`Error fetching data for ${key}:`, result.error);
+      }
+    });
+
     return {
       success: true,
-      endpoint,
-      parameters: args,
-      data: processedData.summary,
-      detailedData: processedData.detailedData,
-      chartData: processedData.chartData,
-      volumeChartData: processedData.volumeChartData,
-      salesChartData: processedData.salesChartData,
-      transactionsChartData: processedData.transactionsChartData,
-      assetsChartData: processedData.assetsChartData,
-      tradersChartData: processedData.tradersChartData,
-      buyersChartData: processedData.buyersChartData,
-      sellersChartData: processedData.sellersChartData,
-      holdersChartData: processedData.holdersChartData,
-      whalesChartData: processedData.whalesChartData,
-    }
-  } catch (error) {
-    console.error(`Error fetching data for ${endpoint}:`, error)
-    return {
-      success: false,
-      endpoint,
-      error: error instanceof Error ? error.message : "Unknown error",
+      reportData: aggregatedReportData,
     }
   }
+
+  if (name === "queryNFTData") {
+    const { endpoint, ...params } = args
+    try {
+      const rawData = await callBitsCrunchAPI(endpoint, params)
+      const processedData = processAndSummarizeData(rawData, endpoint)
+      return {
+        success: true,
+        endpoint,
+        parameters: params,
+        data: processedData.summary,
+        detailedData: processedData.detailedData,
+        chartData: processedData.chartData,
+        volumeChartData: processedData.volumeChartData,
+        salesChartData: processedData.salesChartData,
+        transactionsChartData: processedData.transactionsChartData,
+        assetsChartData: processedData.assetsChartData,
+        tradersChartData: processedData.tradersChartData,
+        buyersChartData: processedData.buyersChartData,
+        sellersChartData: processedData.sellersChartData,
+        holdersChartData: processedData.holdersChartData,
+        whalesChartData: processedData.whalesChartData,
+      }
+    } catch (error) {
+      console.error(`Error fetching data for ${endpoint}:`, error)
+      return {
+        success: false,
+        endpoint,
+        error: error instanceof Error ? error.message : "Unknown error",
+      }
+    }
+  }
+
+  return { success: false, error: `Unknown function call: ${name}` }
 }
 
 export async function POST(req: NextRequest) {
@@ -826,106 +871,53 @@ export async function POST(req: NextRequest) {
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY)
     const model = genAI.getGenerativeModel({
       model: "gemini-1.5-flash",
-      tools: [{ functionDeclarations: [nftQueryFunction] }],
+      tools: [{ functionDeclarations: [queryNFTDataFunction, generateDetailedReportFunction] }],
     })
 
     const systemPrompt = `You are an expert Web3 financial advisor and analytics assistant named "fin3Crunch AI". You have access to BitsCrunch APIs for comprehensive NFT/WEB3 data analysis.
 
 **CRITICAL INSTRUCTION: TOOL USAGE**
-- You MUST use the \`queryNFTData\` tool to answer any user query about NFT or token data.
+- You MUST use the provided tools to answer any user query about NFT or token data.
 - NEVER respond with placeholder text like "[This section will display data...]".
-- When a detailed report is requested, you MUST make all the required function calls simultaneously. Do not explain what you are going to do; just do it by calling the tools.
 - Your final text response should only be generated AFTER all tool calls have been made and their results have been provided back to you.
 
-IMPORTANT PARAMETER RULES:
-- The API uses different parameter names for wallet addresses depending on the endpoint. Be very careful and always use the correct one:
-  - Use \`wallet_address\` for endpoints like \`wallet-score\`, \`wallet-analytics\`, etc.
-  - Use \`wallet\` for \`wallet-metrics\` and \`wallet-balance-nft\`.
-  - Use \`address\` for \`wallet-balance-token\` and \`token-balance\`.
-- For collection-specific endpoints, use "contract_address".
-- For token-specific endpoints, use "token_address".
-- Common aliases: eth=ethereum, matic=polygon, avax=avalanche, bnb/bsc=binance, sol=solana, btc=bitcoin.
-- Always refer to the function tool schema for the correct parameter name for each endpoint.
-
-**Detailed Report Generation:**
-- When a user asks for a "detailed report", "full analysis", "more information", or "complete information" about an NFT collection or a specific NFT, you must generate a comprehensive report.
-- To do this, you will make multiple, simultaneous function calls to \`queryNFTData\` to gather all necessary data points.
-- **For a Collection Report (or base for a specific NFT):**
-  - \`collection-metadata\`
-  - \`collection-analytics\` (use \`time_range: "30d"\`)
-  - \`collection-scores\` (use \`time_range: "30d"\`)
-  - \`collection-whales\` (use \`time_range: "30d"\`)
-- **If a \`token_id\` is also provided for a Specific NFT Report, add these calls:**
-  - \`nft-metadata\`
-  - \`nft-price-estimate\`
-  - \`nft-scores\`
-- After gathering all data, you will receive an aggregated summary. Your final response to the user should be a cohesive summary based on all the fetched data points, mentioning that a detailed report is being displayed.
+**Tool Selection Guide:**
+- For simple, direct questions about a single metric (e.g., "what's the floor price?", "get me the metadata"), use the \`queryNFTData\` tool with the most specific endpoint.
+- For broad requests like "give me a detailed report", "full analysis", "tell me everything about...", or "should I buy this?", you MUST use the \`generateDetailedReport\` tool. This tool is optimized to gather all necessary data in one step.
 
 **Example Scenarios (Few-Shot Learning):**
 
 **Scenario 1: User asks for a detailed report on a collection.**
 - **User Query:** "Can you give me a full analysis of the Bored Ape Yacht Club collection?"
-- **Your Action (Simultaneous Tool Calls):**
-  1. \`queryNFTData({ endpoint: 'collection-metadata', contract_address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D' })\`
-  2. \`queryNFTData({ endpoint: 'collection-analytics', contract_address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D', time_range: '30d' })\`
-  3. \`queryNFTData({ endpoint: 'collection-scores', contract_address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D', time_range: '30d' })\`
-  4. \`queryNFTData({ endpoint: 'collection-whales', contract_address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D', time_range: '30d' })\`
+- **Your Action (Single Tool Call):**
+  1. \`generateDetailedReport({ contract_address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D' })\`
 
 **Scenario 2: User asks for investment advice on a specific NFT.**
 - **User Query:** "Is BAYC #8817 a good buy right now?"
-- **Your Action (Simultaneous Tool Calls):**
-  1. \`queryNFTData({ endpoint: 'collection-floor-price', contract_address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D' })\`
-  2. \`queryNFTData({ endpoint: 'nft-price-estimate', contract_address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D', token_id: '8817' })\`
+- **Your Action (Single Tool Call):**
+  1. \`generateDetailedReport({ contract_address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D', token_id: '8817' })\`
 
 **Scenario 3: User asks for top deals.**
 - **User Query:** "What are some good NFTs to invest in?"
 - **Your Action (Single Tool Call):**
   1. \`queryNFTData({ endpoint: 'nft-top-deals', sort_by: 'deal_score' })\`
 
-When asked for NFT or Token data:
-1.  First, provide the metadata using the 'nft-metadata' or 'collection-metadata' endpoint.
-2.  If the user asks for specific information, find the most appropriate endpoint and retrieve the data.
-3.  **Proactive Suggestions:** If a user asks for general NFT investment advice, "what to buy", or "good NFTs to invest in" without specifying a collection, proactively use the \`nft-top-deals\` endpoint to show them current opportunities. This is more helpful than asking them to be more specific.
-4.  Extract required parameters from their query.
-5.  If you have previously provided a list of items (e.g., top deals, collections) and the user asks for more details about one of those items, first check your conversation history for the contract_address and blockchain of that specific item. If found, use those details directly without asking the user again.
-6.  If required parameters are missing and not found in history, ask the user to provide them.
-7.  Use the queryNFTData function to fetch the data.
-8.  Present the results in a clear, user-friendly format.
-
-For investment or buy/sell recommendations for NFTs:
-- If a user asks "Should I invest in X NFT?" or "Is X NFT a good buy/sell?", first fetch the current floor price using 'collection-floor-price' and then the estimated price using 'price_estimate' (for individual NFTs) or 'liquify-collection-price-estimate' (for collections).
-- Compare the current floor price with the estimated price.
+For investment or buy/sell recommendations:
+- Use the \`generateDetailedReport\` tool to gather comprehensive data first.
+- Then, compare the current floor price with the estimated price.
 - If estimated price is significantly higher than current floor price, recommend BUY.
 - If estimated price is significantly lower than current floor price, recommend SELL.
 - If they are similar, recommend HOLD or NEUTRAL.
 - Always provide a brief reason for your recommendation.
 - Format your recommendation clearly, starting with "RECOMMENDATION: [BUY/SELL/HOLD/NEUTRAL] - [Reason]". This specific format is crucial for the frontend to display it correctly.
 
-For investment or buy/sell recommendations for Tokens:
-- If a user asks "Should I invest in X Token?" or "Is X Token a good buy/sell?", first fetch the current price using 'token-metrics' and then the estimated price using 'token-price-prediction'.
-- Compare the current price with the predicted price.
-- If predicted price is significantly higher than current price, recommend BUY.
-- If predicted price is significantly lower than current price, recommend SELL.
-- If they are similar, recommend HOLD or NEUTRAL.
-- Always provide a brief reason for your recommendation.
-- Format your recommendation clearly, starting with "RECOMMENDATION: [BUY/SELL/HOLD/NEUTRAL] - [Reason]". This specific format is crucial for the frontend to display it correctly.
-
-When asked for historical price data for a token, use 'token-historical-price' and mention that a chart will be displayed.
-
 **Market Sentiment Analysis (Financial Advisor Role):**
-- When providing data, especially from analytics endpoints (e.g., 'collection-analytics', 'market-insights-analytics', 'market-insights-traders', 'market-insights-holders'), analyze the 'change' and 'trend' percentages/data.
+- When providing data, especially from analytics endpoints, analyze the 'change' and 'trend' percentages/data.
 - If volume, sales, or prices are consistently rising or have a significant positive 'change' percentage over a period, infer a 'bullish' sentiment.
 - If volume, sales, or prices are consistently falling or have a significant negative 'change' percentage, infer a 'bearish' sentiment.
 - If changes are minimal or mixed, infer a 'neutral' or 'stable' sentiment.
 - Always explain *why* you've determined a certain sentiment, referencing the data (e.g., "The market appears bullish, with a 15% increase in volume over the last 24 hours.").
 - Use your financial advisor persona to provide actionable insights based on the sentiment.
-
-**Interactive Button Suggestions:**
-- When you need specific input from the user that can be chosen from a predefined list (e.g., blockchain, time range, type of market insight), phrase your question clearly and list the options.
-- For example, instead of "What blockchain?", say "Which blockchain are you interested in? (e.g., Ethereum, Polygon, Solana)".
-- For time ranges, say "What time range would you like? (e.g., 24h, 7d, 30d)".
-- For market insights, say "What kind of market insights are you looking for? (e.g., Holders, Traders, Analytics)".
-- The frontend will parse these options and present them as buttons. Do not include special formatting for the buttons, just list the options clearly in your natural language response.
 `
 
     let chat = chatSessions.get(sessionId)
@@ -946,7 +938,7 @@ When asked for historical price data for a token, use 'token-historical-price' a
             role: "model",
             parts: [
               {
-                text: "I understand. I'm your NFT/Web3 analytics assistant with access to BitsCrunch APIs. I'll help you analyze NFT/Web3 data, provide investment insights, and maintain context throughout our conversation.",
+                text: "I understand. I'm your NFT/Web3 analytics assistant with access to BitsCrunch APIs. I will use the `generateDetailedReport` tool for comprehensive analyses and `queryNFTData` for specific metrics.",
               },
             ],
           },
@@ -968,127 +960,69 @@ When asked for historical price data for a token, use 'token-historical-price' a
 
     let responseData = null
     let recommendationData = null
-    let chartData = null // For token historical price
-    let volumeChartData = null // For collection/market analytics
-    let salesChartData = null // For collection/market analytics
-    let transactionsChartData = null // For collection/market analytics
-    let assetsChartData = null // For collection analytics
-    let tradersChartData = null // For market traders
-    let buyersChartData = null // For market traders
-    let sellersChartData = null // For market traders
-    let holdersChartData = null // For market holders
-    let whalesChartData = null // For market holders
-    let reportData: any = null // For aggregated detailed reports
+    let chartData = null
+    let volumeChartData = null
+    let salesChartData = null
+    let transactionsChartData = null
+    let assetsChartData = null
+    let tradersChartData = null
+    let buyersChartData = null
+    let sellersChartData = null
+    let holdersChartData = null
+    let whalesChartData = null
+    let reportData: any = null
     let finalText = response.text()
 
     const functionCalls = response.functionCalls()
     if (functionCalls && functionCalls.length > 0) {
       console.log("Chat API: Processing function calls")
+      const functionCall = functionCalls[0] // Assuming one primary tool call for now
+      const result = await handleFunctionCall(functionCall)
 
-      const isDetailedReportRequest =
-        lastMessage.content.toLowerCase().includes("detailed report") ||
-        lastMessage.content.toLowerCase().includes("full analysis") ||
-        lastMessage.content.toLowerCase().includes("more information") ||
-        lastMessage.content.toLowerCase().includes("complete information")
-
-      if (isDetailedReportRequest && functionCalls.length > 0) {
-        const reportPromises = functionCalls.map((fc) => handleFunctionCall(fc.args.endpoint, fc.args))
-        const reportResults = await Promise.all(reportPromises)
-
-        const aggregatedReportData: any = {
-          isSpecificNft: functionCalls.some((fc) => fc.args.token_id),
+      if (result.success) {
+        if (functionCall.name === 'generateDetailedReport') {
+          reportData = result.reportData;
+        } else {
+          responseData = {
+            metrics: result.data,
+            endpoint: result.endpoint,
+            parameters: functionCall.args,
+            detailedData: result.detailedData,
+          }
+          chartData = result.chartData
+          volumeChartData = result.volumeChartData
+          salesChartData = result.salesChartData
+          transactionsChartData = result.transactionsChartData
+          assetsChartData = result.assetsChartData
+          tradersChartData = result.tradersChartData
+          buyersChartData = result.buyersChartData
+          sellersChartData = result.sellersChartData
+          holdersChartData = result.holdersChartData
+          whalesChartData = result.whalesChartData
         }
 
-        reportResults.forEach((result, index) => {
-          if (result.success) {
-            const endpoint = functionCalls[index].args.endpoint
-            const data = result.data
-
-            if (endpoint === "collection-metadata") aggregatedReportData.collectionMetadata = data
-            if (endpoint === "nft-metadata") aggregatedReportData.nftMetadata = data
-            if (endpoint === "collection-analytics") aggregatedReportData.collectionAnalytics = data
-            if (endpoint === "collection-scores") aggregatedReportData.collectionScores = data
-            if (endpoint === "collection-whales") aggregatedReportData.collectionWhales = data
-            if (endpoint === "nft-price-estimate") aggregatedReportData.nftPriceEstimate = data
-            if (endpoint === "nft-scores") aggregatedReportData.nftScores = data
-          }
-        })
-
-        reportData = aggregatedReportData
-
-        const reportSummaryForGemini = `Aggregated report data: ${JSON.stringify(reportData, null, 2)}`
         const summaryResult = await chat.sendMessage([
           {
             functionResponse: {
-              name: "queryNFTData",
-              response: {
-                success: true,
-                summary: reportSummaryForGemini,
-                report_data: reportData,
-              },
+              name: functionCall.name,
+              response: result,
             },
           },
         ])
         finalText = summaryResult.response.text()
       } else {
-        // Existing single function call handling
-        for (const functionCall of functionCalls) {
-          if (functionCall.name === "queryNFTData" && functionCall.args.endpoint) {
-            const result = await handleFunctionCall(functionCall.args.endpoint, functionCall.args)
-
-            if (result.success) {
-              responseData = {
-                metrics: result.data,
-                endpoint: result.endpoint,
-                parameters: functionCall.args,
-                detailedData: result.detailedData,
-              }
-              chartData = result.chartData
-              volumeChartData = result.volumeChartData
-              salesChartData = result.salesChartData
-              transactionsChartData = result.transactionsChartData
-              assetsChartData = result.assetsChartData
-              tradersChartData = result.tradersChartData
-              buyersChartData = result.buyersChartData
-              sellersChartData = result.sellersChartData
-              holdersChartData = result.holdersChartData
-              whalesChartData = result.whalesChartData
-
-              const dataSummaryForGemini = `Data fetched successfully from ${result.endpoint}:
-Summary: ${JSON.stringify(result.data, null, 2)}
-Detailed items: ${JSON.stringify(result.detailedData, null, 2)}`
-
-              const summaryResult = await chat.sendMessage([
-                {
-                  functionResponse: {
-                    name: functionCall.name,
-                    response: {
-                      success: true,
-                      summary: dataSummaryForGemini,
-                      endpoint: result.endpoint,
-                      detailed_items: result.detailedData,
-                    },
-                  },
-                },
-              ])
-              finalText = summaryResult.response.text()
-            } else {
-              const errorResult = await chat.sendMessage([
-                {
-                  functionResponse: {
-                    name: functionCall.name,
-                    response: {
-                      success: false,
-                      error: result.error,
-                      endpoint: result.endpoint,
-                    },
-                  },
-                },
-              ])
-              finalText = errorResult.response.text()
-            }
-          }
-        }
+        const errorResult = await chat.sendMessage([
+          {
+            functionResponse: {
+              name: functionCall.name,
+              response: {
+                success: false,
+                error: result.error,
+              },
+            },
+          },
+        ])
+        finalText = errorResult.response.text()
       }
     }
 
