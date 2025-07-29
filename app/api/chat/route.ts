@@ -853,26 +853,25 @@ async function handleFunctionCall(functionCall: { name: string; args: Record<str
       )
     }
 
-    const promises = apiCalls.map((call) => callBitsCrunchAPI(call.endpoint, call.params).catch((e) => ({ error: e.message, endpoint: call.endpoint })))
-    const results = await Promise.all(promises)
-
     const aggregatedReportData: any = { isSpecificNft }
-
     if (isSpecificNft) {
-      // Pre-populate with token_id to ensure it's available even if metadata call fails
       aggregatedReportData.nftMetadata = { token_id: token_id }
     }
 
-    results.forEach((result, index) => {
-      const key = apiCalls[index].key
-      if (result && !result.error) {
-        const processedSummary = processAndSummarizeData(result, apiCalls[index].endpoint).summary
-        // Merge the summary, preserving pre-populated data like token_id
-        aggregatedReportData[key] = { ...(aggregatedReportData[key] || {}), ...processedSummary }
-      } else {
-        console.error(`Error fetching data for ${key}:`, result.error)
+    for (const call of apiCalls) {
+      try {
+        const result = await callBitsCrunchAPI(call.endpoint, call.params)
+        if (result && !result.error) {
+          const processedSummary = processAndSummarizeData(result, call.endpoint).summary
+          aggregatedReportData[call.key] = { ...(aggregatedReportData[call.key] || {}), ...processedSummary }
+        } else {
+          console.error(`Error fetching data for ${call.key}:`, result?.error)
+        }
+      } catch (e: any) {
+        console.error(`Exception fetching data for ${call.key}:`, e.message)
       }
-    })
+      await new Promise((resolve) => setTimeout(resolve, 250)) // 250ms delay
+    }
 
     return {
       success: true,

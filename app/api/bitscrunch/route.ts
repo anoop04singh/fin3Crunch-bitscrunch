@@ -203,9 +203,10 @@ export async function POST(req: NextRequest) {
 
     if (!response.ok) {
       let errorDetails
+      const errorResponse = response.clone()
       try {
         // Try to parse as JSON first
-        errorDetails = await response.json()
+        errorDetails = await errorResponse.json()
       } catch (e) {
         // If that fails, it's likely not JSON, so read as text
         errorDetails = await response.text()
