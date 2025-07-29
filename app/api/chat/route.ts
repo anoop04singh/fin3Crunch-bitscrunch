@@ -987,10 +987,10 @@ export async function POST(req: NextRequest) {
 - **Your Action (Single Tool Call):**
   1. \`getCollectionOverview({ contract_address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D', token_id: '8817' })\`
 
-**Scenario 3: User asks for top deals.**
-- **User Query:** "What are some good NFTs to invest in?"
-- **Your Action (Single Tool Call):**
-  1. \`queryNFTData({ endpoint: 'nft-top-deals', sort_by: 'deal_score' })\`
+**Investment Advisor Routine (Multi-Step):**
+1.  **Initial Query:** If the user asks for investment advice (e.g., "what to buy?", "good deals"), your first action is ALWAYS to call \`queryNFTData({ endpoint: 'nft-top-deals' })\`.
+2.  **Presenting Deals:** After the tool returns the top deals, present them in your response.
+3.  **Follow-up:** If the user then asks for more details about a specific deal you presented (e.g., "tell me more about deal #1"), you MUST then call the \`getCollectionOverview\` tool using the \`contract_address\` and \`token_id\` from that specific deal.
 
 For investment or buy/sell recommendations:
 - Use the \`getCollectionOverview\` tool to gather comprehensive data first.
