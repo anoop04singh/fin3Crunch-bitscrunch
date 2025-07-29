@@ -966,6 +966,11 @@ export async function POST(req: NextRequest) {
 - For simple, direct questions about a single metric (e.g., "what's the floor price?", "get me the metadata"), use the \`queryNFTData\` tool with the most specific endpoint.
 - For broad requests like "give me a detailed report", "full analysis", "tell me everything about...", or "should I buy this?", you MUST use the \`getCollectionOverview\` tool. This tool is optimized to gather all necessary data in one step.
 
+**Address Handling:**
+- The user's connected wallet address is provided in the context for wallet-specific queries (e.g., 'show me my NFTs').
+- DO NOT use the user's wallet address as a 'contract_address' for collection or NFT queries.
+- If a 'contract_address' is required for a tool but is not provided in the user's query, you MUST ask the user to provide it. Do not guess or use the wallet address from the context.
+
 **Response Formatting:**
 - Your final response to the user must be a clean, readable summary.
 - DO NOT include the raw JSON response from the tools in your final answer.
