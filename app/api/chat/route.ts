@@ -61,16 +61,6 @@ const API_ENDPOINTS = {
     params: ["blockchain", "contract_address", "token_id"],
     description: "Retrieve the metadata for a specific NFT. Requires `contract_address` and `token_id`.",
   },
-  "nft-analytics": {
-    url: "https://api.unleashnfts.com/api/v2/nft/analytics?sort_by=sales",
-    params: ["contract_address", "token_id", "blockchain", "sort_by"],
-    description: "Get detailed analytics for a specific NFT. `sort_by` is required, defaults to 'sales'. Example: To see sales analytics for the last 24 hours, use `time_range: '24h'`.",
-  },
-  "nft-scores": {
-    url: "https://api.unleashnfts.com/api/v2/nft/scores?sort_by=price_ceiling",
-    params: ["contract_address", "token_id", "blockchain", "sort_by"],
-    description: "Get performance scores for a specific NFT. `sort_by` is required, defaults to 'price_ceiling'. Example: Use this to find the rarity and popularity of a specific NFT.",
-  },
   "nft-washtrade": {
     url: "https://api.unleashnfts.com/api/v2/nft/washtrade?sort_by=washtrade_volume",
     params: ["contract_address", "token_id", "blockchain", "sort_by"],
@@ -221,8 +211,6 @@ const queryNFTDataSchema = z.discriminatedUnion("endpoint", [
   z.object({ endpoint: z.literal("wallet-score"), wallet_address: z.string() }),
   z.object({ endpoint: z.literal("wallet-metrics"), wallet: z.string(), blockchain: z.string().optional() }),
   z.object({ endpoint: z.literal("nft-metadata"), contract_address: z.string(), token_id: z.string(), blockchain: z.string().optional() }),
-  z.object({ endpoint: z.literal("nft-analytics"), contract_address: z.string(), token_id: z.string().optional(), sort_by: z.string().optional(), blockchain: z.string().optional() }),
-  z.object({ endpoint: z.literal("nft-scores"), contract_address: z.string(), token_id: z.string().optional(), sort_by: z.string().optional(), blockchain: z.string().optional() }),
   z.object({ endpoint: z.literal("nft-washtrade"), contract_address: z.string(), token_id: z.string().optional(), sort_by: z.string().optional(), blockchain: z.string().optional() }),
   z.object({ endpoint: z.literal("nft-top-deals"), sort_by: z.string().optional() }),
   z.object({ endpoint: z.literal("nft-price-estimate"), contract_address: z.string(), token_id: z.string(), blockchain: z.string().optional() }),
@@ -845,9 +833,8 @@ async function handleFunctionCall(functionCall: { name: string; args: Record<str
 
     if (isSpecificNft) {
       apiCalls.push(
-        { key: "nftMetadata", endpoint: "nft-metadata", params: { contract_address, token_id, blockchain } },
+        { key: "nftMetadata", endpoint: "nft-metadata", params: { contract_address, token_id, blockchain, limit: "1" } },
         { key: "nftPriceEstimate", endpoint: "nft-price-estimate", params: { contract_address, token_id, blockchain } },
-        { key: "nftScores", endpoint: "nft-scores", params: { contract_address, token_id, blockchain } },
       )
     }
 
@@ -879,9 +866,12 @@ async function handleFunctionCall(functionCall: { name: string; args: Record<str
 
   if (name === "queryNFTData") {
     const { endpoint, ...rawParams } = args
-    const params = {
+    const params: Record<string, any> = {
       blockchain: "ethereum",
       ...rawParams,
+    }
+    if (endpoint === "nft-metadata") {
+      params.limit = "1"
     }
     try {
       const rawData = await callBitsCrunchAPI(endpoint, params)
