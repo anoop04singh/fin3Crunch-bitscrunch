@@ -421,7 +421,7 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
         summary = {
           volume: latestData.volume ?? null,
           sales_count: latestData.sales ?? null,
-          floor_price: latestData.floor_price_usd ?? null,
+          floor_price_usd: latestData.floor_price_usd ?? null,
           market_cap: latestData.market_cap ?? null,
           average_price: latestData.average_price ?? null,
           timestamp: latestData.updated_at || "N/A",
@@ -484,7 +484,7 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
         summary = {
           volume: dataToProcess.volume ?? dataToProcess.total_volume ?? null,
           sales_count: dataToProcess.sales_count ?? dataToProcess.total_sales ?? null,
-          floor_price: dataToProcess.floor_price ?? null,
+          floor_price_usd: dataToProcess.floor_price_usd ?? null,
           market_cap: dataToProcess.market_cap ?? null,
           average_price: dataToProcess.average_price ?? null,
         }
@@ -575,7 +575,7 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
       }
     } else if (endpoint.includes("floor-price")) {
       summary = {
-        floor_price: dataToProcess.floor_price ?? null,
+        floor_price_usd: dataToProcess.floor_price_usd ?? null,
         currency: dataToProcess.currency || "ETH",
       }
     } else if (endpoint.includes("metadata")) {
@@ -617,10 +617,6 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
         contract_address: dataToProcess.contract_address || "N/A",
         blockchain: dataToProcess.blockchain || "N/A",
         collection_name: dataToProcess.collection_name || "N/A",
-        rarity_sales: JSON.stringify(dataToProcess.rarity_sales || {}),
-        collection_drivers: JSON.stringify(dataToProcess.collection_drivers || {}),
-        nft_rarity_drivers: JSON.stringify(dataToProcess.nft_rarity_drivers || {}),
-        nft_sales_drivers: JSON.stringify(dataToProcess.nft_sales_drivers || {}),
         prediction_percentile: dataToProcess.prediction_percentile ?? null,
         thumbnail_url: dataToProcess.thumbnail_url || "N/A",
         token_image_url: dataToProcess.token_image_url || "N/A",
@@ -734,7 +730,9 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
       for (const key in dataToProcess) {
         if (Object.prototype.hasOwnProperty.call(dataToProcess, key)) {
           const value = dataToProcess[key]
-          fallbackSummary[key] = typeof value === "object" && value !== null ? JSON.stringify(value) : value
+          if (typeof value !== "object" || value === null) {
+            fallbackSummary[key] = value
+          }
         }
       }
       summary = fallbackSummary
@@ -958,6 +956,10 @@ export async function POST(req: NextRequest) {
 **Tool Selection Guide:**
 - For simple, direct questions about a single metric (e.g., "what's the floor price?", "get me the metadata"), use the \`queryNFTData\` tool with the most specific endpoint.
 - For broad requests like "give me a detailed report", "full analysis", "tell me everything about...", or "should I buy this?", you MUST use the \`generateDetailedReport\` tool. This tool is optimized to gather all necessary data in one step.
+
+**Response Formatting:**
+- Your final response to the user must be a clean, readable summary.
+- DO NOT include the raw JSON response from the tools in your final answer.
 
 **Example Scenarios (Few-Shot Learning):**
 

@@ -121,17 +121,13 @@ export function ReportCard({ reportData }: ReportCardProps) {
           />
         )}
         <Metric icon={TrendingUp} title="30d Volume" value={`$${(collectionAnalytics?.volume ?? 0).toLocaleString()}`} />
-        <Metric
-          icon={Gem}
-          title={isSpecificNft ? "Rarity Score" : "Market Cap"}
-          value={
-            isSpecificNft
-              ? typeof nftScores?.rarity_score === "number"
-                ? nftScores.rarity_score.toFixed(2)
-                : "N/A"
-              : `$${(collectionScores?.marketcap ?? 0).toLocaleString()}`
-          }
-        />
+        {!isSpecificNft && (
+          <Metric
+            icon={Gem}
+            title="Market Cap"
+            value={`$${(collectionScores?.marketcap ?? 0).toLocaleString()}`}
+          />
+        )}
       </div>
 
       {collectionWhales && (
