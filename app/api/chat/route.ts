@@ -194,8 +194,8 @@ const BLOCKCHAIN_ALIASES: { [key: string]: string } = {
 const TIME_RANGES = ["15m", "24h", "7d", "30d", "90d", "all"]
 
 // Zod Schemas for Validation
-const generateDetailedReportSchema = z.object({
-  contract_address: z.string({ required_error: "A contract_address is required for a detailed report." }),
+const getCollectionOverviewSchema = z.object({
+  contract_address: z.string({ required_error: "A contract_address is required for a collection overview." }),
   token_id: z.string().optional(),
   blockchain: z.string().optional(),
 })
@@ -286,9 +286,9 @@ const queryNFTDataFunction = {
   },
 }
 
-const generateDetailedReportFunction = {
-  name: "generateDetailedReport",
-  description: "Generates a comprehensive report for an NFT collection or a specific NFT. Use this for broad requests like 'give me a full analysis', 'detailed report', or 'tell me everything about...'. This tool fetches all necessary data in one go.",
+const getCollectionOverviewFunction = {
+  name: "getCollectionOverview",
+  description: "Generates a comprehensive overview for an NFT collection or a specific NFT. Use this for broad requests like 'give me a summary of a collection', 'collection overview', or 'tell me everything about...'. This tool fetches all necessary data in one go.",
   parameters: {
     type: "object",
     properties: {
@@ -802,10 +802,10 @@ async function handleFunctionCall(functionCall: { name: string; args: Record<str
   console.log(`Handling function call for: ${name} with args:`, JSON.stringify(args, null, 2))
 
   // VALIDATION STEP
-  if (name === "generateDetailedReport") {
-    const validation = generateDetailedReportSchema.safeParse(args)
+  if (name === "getCollectionOverview") {
+    const validation = getCollectionOverviewSchema.safeParse(args)
     if (!validation.success) {
-      const errorMessage = `Invalid parameters for generateDetailedReport: ${JSON.stringify(validation.error.flatten().fieldErrors)}`
+      const errorMessage = `Invalid parameters for getCollectionOverview: ${JSON.stringify(validation.error.flatten().fieldErrors)}`
       console.error(errorMessage)
       return { success: false, error: errorMessage }
     }
@@ -819,7 +819,7 @@ async function handleFunctionCall(functionCall: { name: string; args: Record<str
   }
   // END VALIDATION STEP
 
-  if (name === "generateDetailedReport") {
+  if (name === "getCollectionOverview") {
     const { contract_address, token_id } = args
     const blockchain = args.blockchain || "ethereum" // Explicitly set blockchain, defaulting to ethereum.
     const isSpecificNft = !!token_id
@@ -857,10 +857,29 @@ async function handleFunctionCall(functionCall: { name: string; args: Record<str
       }
       await new Promise((resolve) => setTimeout(resolve, 250)) // 250ms delay
     }
+    
+    const trendData: any = {}
+    if (aggregatedReportData.collectionAnalytics) {
+      const analyticsData = await callBitsCrunchAPI("collection-analytics", { contract_address, blockchain, time_range: "30d" });
+      if (analyticsData && analyticsData.data && analyticsData.data[0]) {
+        const latestAnalytics = analyticsData.data[0];
+        const blockDates = parseArrayString(latestAnalytics.block_dates || "{}");
+        const volumeTrend = parseArrayString(latestAnalytics.volume_trend || "{}").map(Number);
+        const salesTrend = parseArrayString(latestAnalytics.sales_trend || "{}").map(Number);
+        const transactionsTrend = parseArrayString(latestAnalytics.transactions_trend || "{}").map(Number);
+        const assetsTrend = parseArrayString(latestAnalytics.assets_trend || "{}").map(Number);
+
+        trendData.volumeChartData = blockDates.map((date, i) => ({ date: new Date(date).toLocaleDateString(), value: volumeTrend[i] || 0 }));
+        trendData.salesChartData = blockDates.map((date, i) => ({ date: new Date(date).toLocaleDateString(), value: salesTrend[i] || 0 }));
+        trendData.transactionsChartData = blockDates.map((date, i) => ({ date: new Date(date).toLocaleDateString(), value: transactionsTrend[i] || 0 }));
+        trendData.assetsChartData = blockDates.map((date, i) => ({ date: new Date(date).toLocaleDateString(), value: assetsTrend[i] || 0 }));
+      }
+    }
 
     return {
       success: true,
       reportData: aggregatedReportData,
+      ...trendData,
     }
   }
 
@@ -932,7 +951,7 @@ export async function POST(req: NextRequest) {
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY)
     const model = genAI.getGenerativeModel({
       model: "gemini-1.5-flash",
-      tools: [{ functionDeclarations: [queryNFTDataFunction, generateDetailedReportFunction] }],
+      tools: [{ functionDeclarations: [queryNFTDataFunction, getCollectionOverviewFunction] }],
     })
 
     const systemPrompt = `You are an expert Web3 financial advisor and analytics assistant named "fin3Crunch AI". You have access to BitsCrunch APIs for comprehensive NFT/WEB3 data analysis.
@@ -945,7 +964,7 @@ export async function POST(req: NextRequest) {
 
 **Tool Selection Guide:**
 - For simple, direct questions about a single metric (e.g., "what's the floor price?", "get me the metadata"), use the \`queryNFTData\` tool with the most specific endpoint.
-- For broad requests like "give me a detailed report", "full analysis", "tell me everything about...", or "should I buy this?", you MUST use the \`generateDetailedReport\` tool. This tool is optimized to gather all necessary data in one step.
+- For broad requests like "give me a detailed report", "full analysis", "tell me everything about...", or "should I buy this?", you MUST use the \`getCollectionOverview\` tool. This tool is optimized to gather all necessary data in one step.
 
 **Response Formatting:**
 - Your final response to the user must be a clean, readable summary.
@@ -956,12 +975,12 @@ export async function POST(req: NextRequest) {
 **Scenario 1: User asks for a detailed report on a collection.**
 - **User Query:** "Can you give me a full analysis of the Bored Ape Yacht Club collection?"
 - **Your Action (Single Tool Call):**
-  1. \`generateDetailedReport({ contract_address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D' })\`
+  1. \`getCollectionOverview({ contract_address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D' })\`
 
 **Scenario 2: User asks for investment advice on a specific NFT.**
 - **User Query:** "Is BAYC #8817 a good buy right now?"
 - **Your Action (Single Tool Call):**
-  1. \`generateDetailedReport({ contract_address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D', token_id: '8817' })\`
+  1. \`getCollectionOverview({ contract_address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D', token_id: '8817' })\`
 
 **Scenario 3: User asks for top deals.**
 - **User Query:** "What are some good NFTs to invest in?"
@@ -969,7 +988,7 @@ export async function POST(req: NextRequest) {
   1. \`queryNFTData({ endpoint: 'nft-top-deals', sort_by: 'deal_score' })\`
 
 For investment or buy/sell recommendations:
-- Use the \`generateDetailedReport\` tool to gather comprehensive data first.
+- Use the \`getCollectionOverview\` tool to gather comprehensive data first.
 - Then, compare the current floor price with the estimated price.
 - If estimated price is significantly higher than current floor price, recommend BUY.
 - If estimated price is significantly lower than current floor price, recommend SELL.
@@ -1004,7 +1023,7 @@ For investment or buy/sell recommendations:
             role: "model",
             parts: [
               {
-                text: "I understand. I'm your NFT/Web3 analytics assistant with access to BitsCrunch APIs. I will use the `generateDetailedReport` tool for comprehensive analyses and `queryNFTData` for specific metrics.",
+                text: "I understand. I'm your NFT/Web3 analytics assistant with access to BitsCrunch APIs. I will use the `getCollectionOverview` tool for comprehensive analyses and `queryNFTData` for specific metrics.",
               },
             ],
           },
@@ -1046,8 +1065,12 @@ For investment or buy/sell recommendations:
       const result = await handleFunctionCall(functionCall)
 
       if (result.success) {
-        if (functionCall.name === 'generateDetailedReport') {
+        if (functionCall.name === 'getCollectionOverview') {
           reportData = result.reportData;
+          volumeChartData = result.volumeChartData;
+          salesChartData = result.salesChartData;
+          transactionsChartData = result.transactionsChartData;
+          assetsChartData = result.assetsChartData;
         } else {
           responseData = {
             metrics: result.data,
