@@ -419,16 +419,16 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
         // This path is for /nft/collection/analytics
         const latestData = dataToProcess[dataToProcess.length - 1] || {}
         summary = {
-          volume: latestData.volume || "N/A",
-          sales_count: latestData.sales || "N/A",
-          floor_price: latestData.floor_price_usd || "N/A",
-          market_cap: latestData.market_cap || "N/A",
-          average_price: latestData.average_price || "N/A",
+          volume: latestData.volume ?? null,
+          sales_count: latestData.sales ?? null,
+          floor_price: latestData.floor_price_usd ?? null,
+          market_cap: latestData.market_cap ?? null,
+          average_price: latestData.average_price ?? null,
           timestamp: latestData.updated_at || "N/A",
-          volume_change: latestData.volume_change || "N/A",
-          sales_change: latestData.sales_change || "N/A",
-          transactions_change: latestData.transactions_change || "N/A",
-          assets_change: latestData.assets_change || "N/A",
+          volume_change: latestData.volume_change ?? null,
+          sales_change: latestData.sales_change ?? null,
+          transactions_change: latestData.transactions_change ?? null,
+          assets_change: latestData.assets_change ?? null,
         }
 
         const blockDates = parseArrayString(latestData.block_dates || "{}")
@@ -460,12 +460,12 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
         const volumeTrend = parseArrayString(dataToProcess.volume_trend || "{}").map(Number)
 
         summary = {
-          total_sales: dataToProcess.sales || "N/A",
-          sales_change: dataToProcess.sales_change || "N/A",
-          total_transactions: dataToProcess.transactions || "N/A",
-          transactions_change: dataToProcess.transactions_change || "N/A",
-          total_volume: dataToProcess.volume || "N/A",
-          volume_change: dataToProcess.volume_change || "N/A",
+          total_sales: dataToProcess.sales ?? null,
+          sales_change: dataToProcess.sales_change ?? null,
+          total_transactions: dataToProcess.transactions ?? null,
+          transactions_change: dataToProcess.transactions_change ?? null,
+          total_volume: dataToProcess.volume ?? null,
+          volume_change: dataToProcess.volume_change ?? null,
         }
 
         volumeChartData = blockDates.map((date: string, i: number) => ({
@@ -482,11 +482,11 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
         }))
       } else {
         summary = {
-          volume: dataToProcess.volume || dataToProcess.total_volume || "N/A",
-          sales_count: dataToProcess.sales_count || dataToProcess.total_sales || "N/A",
-          floor_price: dataToProcess.floor_price || "N/A",
-          market_cap: dataToProcess.market_cap || "N/A",
-          average_price: dataToProcess.average_price || "N/A",
+          volume: dataToProcess.volume ?? dataToProcess.total_volume ?? null,
+          sales_count: dataToProcess.sales_count ?? dataToProcess.total_sales ?? null,
+          floor_price: dataToProcess.floor_price ?? null,
+          market_cap: dataToProcess.market_cap ?? null,
+          average_price: dataToProcess.average_price ?? null,
         }
       }
     } else if (endpoint.includes("holders")) {
@@ -504,10 +504,10 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
         const holdersWhalesTrend = parseArrayString(dataToProcess.holders_whales_trend || "{}").map(Number)
 
         summary = {
-          total_holders: dataToProcess.holders || "N/A",
-          holders_change: dataToProcess.holders_change || "N/A",
-          total_whales: dataToProcess.holders_whales || "N/A",
-          whales_change: dataToProcess.holders_whales_change || "N/A",
+          total_holders: dataToProcess.holders ?? null,
+          holders_change: dataToProcess.holders_change ?? null,
+          total_whales: dataToProcess.holders_whales ?? null,
+          whales_change: dataToProcess.holders_whales_change ?? null,
         }
 
         holdersChartData = blockDates.map((date: string, i: number) => ({
@@ -520,8 +520,8 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
         }))
       } else {
         summary = {
-          total_holders: dataToProcess.total_holders || "N/A",
-          unique_holders: dataToProcess.unique_holders || "N/A",
+          total_holders: dataToProcess.total_holders ?? null,
+          unique_holders: dataToProcess.unique_holders ?? null,
         }
       }
     } else if (endpoint.includes("traders")) {
@@ -540,12 +540,12 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
         const tradersSellersTrend = parseArrayString(dataToProcess.traders_sellers_trend || "{}").map(Number)
 
         summary = {
-          total_traders: dataToProcess.traders || "N/A",
-          traders_change: dataToProcess.traders_change || "N/A",
-          total_buyers: dataToProcess.traders_buyers || "N/A",
-          buyers_change: dataToProcess.traders_buyers_change || "N/A",
-          total_sellers: dataToProcess.traders_sellers || "N/A",
-          sellers_change: dataToProcess.traders_sellers_change || "N/A",
+          total_traders: dataToProcess.traders ?? null,
+          traders_change: dataToProcess.traders_change ?? null,
+          total_buyers: dataToProcess.traders_buyers ?? null,
+          buyers_change: dataToProcess.traders_buyers_change ?? null,
+          total_sellers: dataToProcess.traders_sellers ?? null,
+          sellers_change: dataToProcess.traders_sellers_change ?? null,
         }
 
         tradersChartData = blockDates.map((date: string, i: number) => ({
@@ -562,7 +562,7 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
         }))
       } else {
         summary = {
-          total_traders: dataToProcess.total_traders || "N/A",
+          total_traders: dataToProcess.total_traders ?? null,
         }
       }
     } else if (endpoint.includes("whales")) {
@@ -575,7 +575,7 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
       }
     } else if (endpoint.includes("floor-price")) {
       summary = {
-        floor_price: dataToProcess.floor_price || "N/A",
+        floor_price: dataToProcess.floor_price ?? null,
         currency: dataToProcess.currency || "ETH",
       }
     } else if (endpoint.includes("metadata")) {
@@ -583,7 +583,7 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
         name: dataToProcess.collection_name || dataToProcess.name || "N/A",
         token_id: dataToProcess.token_id || "N/A",
         symbol: dataToProcess.symbol || "N/A",
-        total_supply: dataToProcess.distinct_nft_count || dataToProcess.total_supply || "N/A",
+        total_supply: dataToProcess.distinct_nft_count ?? dataToProcess.total_supply ?? null,
         description: dataToProcess.description || "N/A",
         contract_address: dataToProcess.contract_address || "N/A",
         image_url: dataToProcess.image_url || "N/A",
@@ -595,23 +595,23 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
         // Collection scores
         const scoreData = Array.isArray(dataToProcess) ? dataToProcess[0] : dataToProcess
         summary = {
-          marketcap: scoreData.marketcap || "N/A",
-          price_avg: scoreData.price_avg || "N/A",
-          price_ceiling: scoreData.price_ceiling || "N/A",
+          marketcap: scoreData.marketcap ?? null,
+          price_avg: scoreData.price_avg ?? null,
+          price_ceiling: scoreData.price_ceiling ?? null,
         }
       } else {
         // NFT scores
         const scoreData = Array.isArray(dataToProcess) ? dataToProcess[0] : dataToProcess
         summary = {
-          rarity_score: scoreData.rarity_score || "N/A",
-          popularity_score: scoreData.popularity_score || "N/A",
-          overall_score: scoreData.token_score || "N/A",
+          rarity_score: scoreData.rarity_score ?? null,
+          popularity_score: scoreData.popularity_score ?? null,
+          overall_score: scoreData.token_score ?? null,
         }
       }
     } else if (endpoint.includes("price_estimate")) {
       summary = {
-        price_estimate: dataToProcess.price_estimate || dataToProcess.price || "N/A",
-        confidence: dataToProcess.confidence || "N/A",
+        price_estimate: dataToProcess.price_estimate ?? dataToProcess.price ?? null,
+        confidence: dataToProcess.confidence ?? null,
         currency: dataToProcess.currency || "ETH",
         token_id: dataToProcess.token_id || "N/A",
         contract_address: dataToProcess.contract_address || "N/A",
@@ -621,15 +621,15 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
         collection_drivers: JSON.stringify(dataToProcess.collection_drivers || {}),
         nft_rarity_drivers: JSON.stringify(dataToProcess.nft_rarity_drivers || {}),
         nft_sales_drivers: JSON.stringify(dataToProcess.nft_sales_drivers || {}),
-        prediction_percentile: dataToProcess.prediction_percentile || "N/A",
+        prediction_percentile: dataToProcess.prediction_percentile ?? null,
         thumbnail_url: dataToProcess.thumbnail_url || "N/A",
         token_image_url: dataToProcess.token_image_url || "N/A",
-        price_estimate_lower_bound: dataToProcess.price_estimate_lower_bound || "N/A",
-        price_estimate_upper_bound: dataToProcess.price_estimate_upper_bound || "N/A",
+        price_estimate_lower_bound: dataToProcess.price_estimate_lower_bound ?? null,
+        price_estimate_upper_bound: dataToProcess.price_estimate_upper_bound ?? null,
       }
     } else if (endpoint.includes("wallet-balance-defi")) {
       summary = {
-        total_value: dataToProcess.total_value || "N/A",
+        total_value: dataToProcess.total_value ?? null,
         assets:
           dataToProcess.assets && Array.isArray(dataToProcess.assets)
             ? dataToProcess.assets.map((a: any) => `${a.name}: ${a.balance}`).join(", ")
@@ -713,21 +713,21 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
       }
     } else if (endpoint.includes("token-metrics")) {
       summary = {
-        current_price: dataToProcess.current_price || "N/A",
-        market_cap: dataToProcess.market_cap || "N/A",
-        holders: dataToProcess.holders || "N/A",
-        token_score: dataToProcess.token_score || "N/A",
+        current_price: dataToProcess.current_price ?? null,
+        market_cap: dataToProcess.market_cap ?? null,
+        holders: dataToProcess.holders ?? null,
+        token_score: dataToProcess.token_score ?? null,
         risk_level: dataToProcess.risk_level || "N/A",
         token_name: dataToProcess.token_name || "N/A",
         token_symbol: dataToProcess.token_symbol || "N/A",
       }
     } else if (endpoint.includes("token-price-prediction")) {
       summary = {
-        price_estimate: dataToProcess.price_estimate || "N/A",
-        lower_bound: dataToProcess.price_estimate_lower_bound || "N/A",
-        upper_bound: dataToProcess.price_estimate_upper_bound || "N/A",
-        volatility_influence: dataToProcess.price_range_volatility_influence || "N/A",
-        trading_volume_trend: dataToProcess.trading_volume_trend_influence || "N/A",
+        price_estimate: dataToProcess.price_estimate ?? null,
+        lower_bound: dataToProcess.price_estimate_lower_bound ?? null,
+        upper_bound: dataToProcess.price_estimate_upper_bound ?? null,
+        volatility_influence: dataToProcess.price_range_volatility_influence ?? null,
+        trading_volume_trend: dataToProcess.trading_volume_trend_influence ?? null,
       }
     } else {
       const fallbackSummary: Record<string, any> = {}

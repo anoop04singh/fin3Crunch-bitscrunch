@@ -103,13 +103,21 @@ export function ReportCard({ reportData }: ReportCardProps) {
         <Metric
           icon={DollarSign}
           title="Floor Price"
-          value={`$${collectionAnalytics?.floor_price_usd?.toFixed(2) ?? "N/A"}`}
+          value={
+            typeof collectionAnalytics?.floor_price_usd === "number"
+              ? `$${collectionAnalytics.floor_price_usd.toFixed(2)}`
+              : "N/A"
+          }
         />
         {isSpecificNft && (
           <Metric
             icon={DollarSign}
             title="Est. Price"
-            value={`$${nftPriceEstimate?.price_estimate?.toFixed(2) ?? "N/A"}`}
+            value={
+              typeof nftPriceEstimate?.price_estimate === "number"
+                ? `$${nftPriceEstimate.price_estimate.toFixed(2)}`
+                : "N/A"
+            }
           />
         )}
         <Metric icon={TrendingUp} title="30d Volume" value={`$${(collectionAnalytics?.volume ?? 0).toLocaleString()}`} />
@@ -118,7 +126,9 @@ export function ReportCard({ reportData }: ReportCardProps) {
           title={isSpecificNft ? "Rarity Score" : "Market Cap"}
           value={
             isSpecificNft
-              ? nftScores?.rarity_score?.toFixed(2) ?? "N/A"
+              ? typeof nftScores?.rarity_score === "number"
+                ? nftScores.rarity_score.toFixed(2)
+                : "N/A"
               : `$${(collectionScores?.marketcap ?? 0).toLocaleString()}`
           }
         />
