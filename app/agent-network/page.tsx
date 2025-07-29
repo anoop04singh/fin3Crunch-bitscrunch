@@ -116,6 +116,21 @@ export default function AgentNetworkPage() {
     }
   }, [marketAnalytics, setAgentNetworkState])
 
+  // Show initial suggestions when chat is opened
+  useEffect(() => {
+    if (chatActive && messages.length === 1) {
+      const initialSuggestions = [
+        "What's the current NFT market sentiment?",
+        "Show me the top NFT deals right now.",
+        "Analyze a collection by contract address.",
+      ]
+      if (walletAddress) {
+        initialSuggestions.push("What is my wallet's risk score?")
+      }
+      setSuggestions(initialSuggestions)
+    }
+  }, [chatActive, messages.length, walletAddress])
+
   const parseBotMessageForButtons = (messageContent: string) => {
     const lowerCaseContent = messageContent.toLowerCase()
     if (lowerCaseContent.includes("blockchain")) setDynamicButtons(SUPPORTED_BLOCKCHAINS)
@@ -126,16 +141,35 @@ export default function AgentNetworkPage() {
   }
 
   const generateSuggestions = (lastBotMessage: Message) => {
-    const newSuggestions = [
-      "Show me top NFT deals",
-      "What is the market sentiment for NFTs?",
-      "Explain NFT rarity scores",
-    ]
+    let newSuggestions: string[] = []
+
+    // Contextual suggestions based on last message
     if (lastBotMessage.data?.endpoint?.includes("top-deals") && lastBotMessage.data.detailedData?.length > 0) {
       const firstDeal = lastBotMessage.data.detailedData[0]
       newSuggestions.push(`Tell me more about ${firstDeal.collection_name} #${firstDeal.token_id}`)
+      newSuggestions.push("Show me another set of deals.")
+    } else if (lastBotMessage.reportData) {
+      if (lastBotMessage.reportData.isSpecificNft) {
+        newSuggestions.push("What's the price prediction for this NFT?")
+        newSuggestions.push("How does its rarity compare to the collection?")
+      } else {
+        newSuggestions.push("Who are the whale holders of this collection?")
+        newSuggestions.push("Show me the floor price trend for the last 7 days.")
+      }
     }
-    setSuggestions(newSuggestions)
+
+    // Generic fallback suggestions
+    if (newSuggestions.length === 0) {
+      newSuggestions.push("What's the latest on the NFT market?")
+      newSuggestions.push("Find undervalued NFTs for me.")
+      if (walletAddress) {
+        newSuggestions.push("Analyze my wallet's holdings.")
+      } else {
+        newSuggestions.push("Analyze a wallet by address.")
+      }
+    }
+
+    setSuggestions(newSuggestions.slice(0, 4)) // Limit to 4 suggestions
   }
 
   const handleSendMessage = async (messageContent: string) => {
@@ -183,6 +217,22 @@ export default function AgentNetworkPage() {
   const handleSuggestionClick = (suggestion: string) => {
     setInput(suggestion)
     handleSendMessage(suggestion)
+  }
+
+  const suggestionsContainerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.07,
+        delayChildren: 0.2,
+      },
+    },
+  }
+
+  const suggestionItemVariants = {
+    hidden: { opacity: 0, y: 15 },
+    visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } },
   }
 
   return (
@@ -264,19 +314,25 @@ export default function AgentNetworkPage() {
           </div>
           <div className="p-4 bg-neutral-900/50 border-t border-neutral-800">
             {(suggestions.length > 0 || dynamicButtons.length > 0) && (
-              <div className="mb-3 flex flex-wrap gap-2">
+              <motion.div
+                className="mb-3 flex flex-wrap gap-2"
+                variants={suggestionsContainerVariants}
+                initial="hidden"
+                animate="visible"
+              >
                 {(dynamicButtons.length > 0 ? dynamicButtons : suggestions).map((s, i) => (
-                  <Button
-                    key={i}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleSuggestionClick(s)}
-                    className="border-neutral-700 bg-neutral-800/50 text-neutral-300 hover:bg-neutral-700 hover:text-white transition-colors text-xs"
-                  >
-                    {s}
-                  </Button>
+                  <motion.div key={i} variants={suggestionItemVariants}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleSuggestionClick(s)}
+                      className="border-neutral-700 bg-neutral-800/50 text-neutral-300 hover:bg-neutral-700 hover:text-white transition-all duration-200 text-xs hover:border-neutral-600 hover:scale-105 active:scale-100"
+                    >
+                      {s}
+                    </Button>
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             )}
             <div className="flex gap-2">
               <Input
