@@ -629,7 +629,7 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
           total_tokens: rawData.pagination?.total_items || dataToProcess.length,
           sample_tokens: dataToProcess
             .slice(0, 3)
-            .map((t: any) => `${t.symbol}: ${t.balance}`)
+            .map((t: any) => `${t.token_symbol}: ${t.quantity}`)
             .join(", "),
         }
       } else {
