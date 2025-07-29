@@ -834,7 +834,8 @@ async function handleFunctionCall(functionCall: { name: string; args: Record<str
   // END VALIDATION STEP
 
   if (name === "generateDetailedReport") {
-    const { contract_address, token_id, blockchain = "ethereum" } = args
+    const { contract_address, token_id } = args
+    const blockchain = args.blockchain || "ethereum" // Explicitly set blockchain, defaulting to ethereum.
     const isSpecificNft = !!token_id
 
     const apiCalls: { key: string; endpoint: string; params: any }[] = [
@@ -852,18 +853,26 @@ async function handleFunctionCall(functionCall: { name: string; args: Record<str
       )
     }
 
-    const promises = apiCalls.map(call => callBitsCrunchAPI(call.endpoint, call.params).catch(e => ({ error: e.message, endpoint: call.endpoint })));
-    const results = await Promise.all(promises);
+    const promises = apiCalls.map((call) => callBitsCrunchAPI(call.endpoint, call.params).catch((e) => ({ error: e.message, endpoint: call.endpoint })))
+    const results = await Promise.all(promises)
 
-    const aggregatedReportData: any = { isSpecificNft };
+    const aggregatedReportData: any = { isSpecificNft }
+
+    if (isSpecificNft) {
+      // Pre-populate with token_id to ensure it's available even if metadata call fails
+      aggregatedReportData.nftMetadata = { token_id: token_id }
+    }
+
     results.forEach((result, index) => {
-      const key = apiCalls[index].key;
+      const key = apiCalls[index].key
       if (result && !result.error) {
-        aggregatedReportData[key] = processAndSummarizeData(result, apiCalls[index].endpoint).summary;
+        const processedSummary = processAndSummarizeData(result, apiCalls[index].endpoint).summary
+        // Merge the summary, preserving pre-populated data like token_id
+        aggregatedReportData[key] = { ...(aggregatedReportData[key] || {}), ...processedSummary }
       } else {
-        console.error(`Error fetching data for ${key}:`, result.error);
+        console.error(`Error fetching data for ${key}:`, result.error)
       }
-    });
+    })
 
     return {
       success: true,
