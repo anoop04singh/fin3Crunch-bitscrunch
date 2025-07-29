@@ -201,15 +201,15 @@ const getCollectionOverviewSchema = z.object({
 })
 
 const queryNFTDataSchema = z.discriminatedUnion("endpoint", [
-  z.object({ endpoint: z.literal("token-balance"), address: z.string(), token_address: z.string().optional(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("token-balance"), walletAddress: z.string(), token_address: z.string().optional(), blockchain: z.string().optional() }),
   z.object({ endpoint: z.literal("token-metrics"), token_address: z.string(), blockchain: z.string().optional() }),
   z.object({ endpoint: z.literal("token-price-prediction"), token_address: z.string() }),
   z.object({ endpoint: z.literal("token-dex-price"), token_address: z.string(), time_range: z.string().optional(), blockchain: z.string().optional() }),
   z.object({ endpoint: z.literal("token-historical-price"), token_address: z.string(), time_range: z.string(), blockchain: z.string().optional() }),
-  z.object({ endpoint: z.literal("wallet-balance-nft"), wallet: z.string(), blockchain: z.string().optional() }),
-  z.object({ endpoint: z.literal("wallet-balance-token"), address: z.string(), blockchain: z.string().optional() }),
-  z.object({ endpoint: z.literal("wallet-score"), wallet_address: z.string() }),
-  z.object({ endpoint: z.literal("wallet-metrics"), wallet: z.string(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("wallet-balance-nft"), walletAddress: z.string(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("wallet-balance-token"), walletAddress: z.string(), blockchain: z.string().optional() }),
+  z.object({ endpoint: z.literal("wallet-score"), walletAddress: z.string() }),
+  z.object({ endpoint: z.literal("wallet-metrics"), walletAddress: z.string(), blockchain: z.string().optional() }),
   z.object({ endpoint: z.literal("nft-metadata"), contract_address: z.string(), token_id: z.string(), blockchain: z.string().optional() }),
   z.object({ endpoint: z.literal("nft-washtrade"), contract_address: z.string(), token_id: z.string().optional(), sort_by: z.string().optional(), blockchain: z.string().optional() }),
   z.object({ endpoint: z.literal("nft-top-deals"), sort_by: z.string().optional() }),
@@ -256,17 +256,9 @@ const queryNFTDataFunction = {
         type: "string",
         description: "Specific NFT token ID.",
       },
-      wallet_address: {
+      walletAddress: {
         type: "string",
-        description: "User's wallet address for wallet-specific endpoints.",
-      },
-      wallet: {
-        type: "string",
-        description: "User's wallet address for 'wallet-metrics' and 'wallet-balance-nft'.",
-      },
-      address: {
-        type: "string",
-        description: "User's wallet address for 'wallet-balance-token' and 'token-balance'.",
+        description: "The user's wallet address. Required for all wallet-specific endpoints like wallet-balance-token, wallet-balance-nft, wallet-score, etc.",
       },
       token_address: {
         type: "string",
@@ -884,11 +876,23 @@ async function handleFunctionCall(functionCall: { name: string; args: Record<str
   }
 
   if (name === "queryNFTData") {
-    const { endpoint, ...rawParams } = args
+    const { endpoint, walletAddress, ...rawParams } = args
     const params: Record<string, any> = {
       blockchain: "ethereum",
       ...rawParams,
     }
+
+    // Map the unified walletAddress to the correct parameter name for the API
+    if (walletAddress) {
+      if (endpoint === 'wallet-balance-token' || endpoint === 'token-balance') {
+          params.address = walletAddress;
+      } else if (endpoint === 'wallet-balance-nft' || endpoint === 'wallet-metrics') {
+          params.wallet = walletAddress;
+      } else if (endpoint === 'wallet-score') {
+          params.wallet_address = walletAddress;
+      }
+    }
+
     if (endpoint === "nft-metadata") {
       params.limit = "1"
     }
