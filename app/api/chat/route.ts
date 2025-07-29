@@ -950,7 +950,7 @@ export async function POST(req: NextRequest) {
     // Initialize Gemini AI
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY)
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
+      model: "gemini-2.5-flash",
       tools: [{ functionDeclarations: [queryNFTDataFunction, getCollectionOverviewFunction] }],
     })
 

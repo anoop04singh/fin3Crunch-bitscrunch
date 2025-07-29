@@ -78,7 +78,6 @@ export async function POST(req: NextRequest) {
         collectionAnalytics,
         nftPriceEstimate,
         nftScores,
-        collectionScores,
         collectionWhales,
         floorVsEstimateDiffPercent,
         recommendation,
@@ -147,7 +146,7 @@ export async function POST(req: NextRequest) {
   console.log(`Calling Gemini AI for prompt type: ${promptType}`)
   try {
     const { text } = await generateText({
-      model: google("models/gemini-2.5-flash-latest"), // Using a fast model for quick responses
+      model: google("models/gemini-2.5-flash"), // Using a fast model for quick responses
       system: systemPrompt,
       prompt: prompt,
       temperature: 0.7, // Adjust for creativity vs. factualness
