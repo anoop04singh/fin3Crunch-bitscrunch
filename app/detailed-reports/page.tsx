@@ -27,6 +27,7 @@ import { XCircle } from "lucide-react"
 import { sleep } from "@/lib/utils"
 import { AnimatedSection } from "@/components/animated-section"
 import { toast } from "sonner"
+import { MarkdownRenderer } from "@/components/markdown-renderer"
 
 // Interfaces
 interface NftMetadata {
@@ -309,6 +310,7 @@ export default function DetailedReportsPage() {
 
   const generateAiSummary = async () => {
     if (!reportData) return
+    const toastId = toast.loading("Generating AI summary...")
     setLoadingAi(true)
     setAiSummary(null)
     try {
@@ -320,8 +322,10 @@ export default function DetailedReportsPage() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Failed to generate AI summary")
       setAiSummary(data.summary)
+      toast.success("AI Summary Generated", { id: toastId })
     } catch (err: any) {
       setReportError(`AI Summary Error: ${err.message}`)
+      toast.error("Failed to Generate Summary", { id: toastId, description: err.message || "An unknown error occurred." })
     } finally {
       setLoadingAi(false)
     }
@@ -384,13 +388,6 @@ export default function DetailedReportsPage() {
         </div>
       )}
 
-      {loadingReport && (
-        <div className="flex items-center justify-center py-10">
-          <Loader2 className="h-8 w-8 animate-spin text-teal-500" />
-          <span className="ml-3 text-neutral-400">Fetching and analyzing on-chain data...</span>
-        </div>
-      )}
-
       {reportData && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -435,15 +432,15 @@ export default function DetailedReportsPage() {
             <div className="relative border-l-4 border-teal-500 pl-8 py-4 bg-neutral-900/30 rounded-r-lg">
               <Sparkles className="absolute -left-4 top-4 w-6 h-6 text-teal-400 bg-neutral-900 p-1 rounded-full" />
               <h3 className="text-lg font-semibold text-white mb-2">AI-Powered Insights</h3>
-              {loadingAi ? (
-                <div className="flex items-center">
-                  <Loader2 className="h-5 w-5 animate-spin text-teal-500" />
-                  <span className="ml-2 text-neutral-400 text-sm">Generating AI summary...</span>
-                </div>
-              ) : aiSummary ? (
-                <p className="text-base text-neutral-300 leading-relaxed">{aiSummary}</p>
+              {aiSummary ? (
+                <MarkdownRenderer content={aiSummary} />
               ) : (
-                <Button onClick={generateAiSummary} size="sm" className="bg-teal-500 hover:bg-teal-600 text-white">
+                <Button
+                  onClick={generateAiSummary}
+                  size="sm"
+                  className="bg-teal-500 hover:bg-teal-600 text-white"
+                  disabled={loadingAi}
+                >
                   Generate AI Summary
                 </Button>
               )}

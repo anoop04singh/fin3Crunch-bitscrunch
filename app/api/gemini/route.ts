@@ -130,7 +130,10 @@ export async function POST(req: NextRequest) {
       }
 
       prompt = `
-        Analyze the following detailed NFT report. Provide a comprehensive yet concise summary covering the collection's market position, price analysis, key scores, and recent trends. If it's a specific NFT, include insights on its value relative to the collection floor. Conclude with a final verdict or outlook. Do not state that data is missing if it is provided as "N/A"; simply work with the data you have.
+        Analyze the following detailed NFT report. Provide a highly concise summary.
+        - **CRITICAL:** The entire summary must be a maximum of 3 sentences.
+        - Focus on the most important insights: market position, financial health (volume, price), and overall outlook.
+        - Use markdown for formatting key terms (e.g., **market position**).
         
         Report Data:
         ${reportContent}
