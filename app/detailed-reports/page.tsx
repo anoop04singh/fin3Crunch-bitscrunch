@@ -68,11 +68,6 @@ interface NftPriceEstimate {
   price_estimate_upper_bound: number
 }
 
-interface NftScores {
-  rarity_score: number
-  price_ceiling: number
-}
-
 interface CollectionScores {
   marketcap: number
   price_avg: number
@@ -99,7 +94,6 @@ interface DetailedReportData {
   collectionMetadata?: CollectionMetadata
   collectionAnalytics?: CollectionAnalytics
   nftPriceEstimate?: NftPriceEstimate
-  nftScores?: NftScores
   collectionScores?: CollectionScores
   collectionWhales?: CollectionWhales
   recommendation?: string
@@ -253,7 +247,6 @@ export default function DetailedReportsPage() {
         promises.push(
           fetchApiData("/nft/metadata", { contract_address: contractAddress, token_id: inputNftTokenId }),
           fetchApiData("/nft/liquify/price_estimate", { contract_address: contractAddress, token_id: inputNftTokenId }),
-          fetchApiData("/nft/scores", { contract_address: contractAddress, token_id: inputNftTokenId, sort_by: "price_ceiling" }),
         )
       }
 
@@ -267,7 +260,6 @@ export default function DetailedReportsPage() {
         collectionWhalesRes,
         nftMetadataRes,
         nftPriceEstimateRes,
-        nftScoresRes,
       ] = results
 
       const collectionMetadata =
@@ -279,7 +271,6 @@ export default function DetailedReportsPage() {
       const nftMetadata = isSpecificNft && nftMetadataRes?.status === "fulfilled" ? nftMetadataRes.value?.[0] : null
       const nftPriceEstimate =
         isSpecificNft && nftPriceEstimateRes?.status === "fulfilled" ? nftPriceEstimateRes.value?.[0] : null
-      const nftScores = isSpecificNft && nftScoresRes?.status === "fulfilled" ? nftScoresRes.value?.[0] : null
 
       if (!collectionMetadata && !nftMetadata) {
         throw new Error("Could not fetch essential metadata for the contract address.")
@@ -303,7 +294,6 @@ export default function DetailedReportsPage() {
         collectionWhales,
         nftMetadata,
         nftPriceEstimate,
-        nftScores,
         recommendation,
         collectionTrends,
       })
@@ -491,18 +481,12 @@ export default function DetailedReportsPage() {
               />
               <MetricItem
                 icon={Gem}
-                title={reportData.isSpecificNft ? "Rarity Score" : "Market Cap"}
-                value={
-                  reportData.isSpecificNft
-                    ? reportData.nftScores?.rarity_score != null
-                      ? Number(reportData.nftScores.rarity_score).toFixed(2)
-                      : "N/A"
-                    : `$${
-                        reportData.collectionScores?.marketcap != null
-                          ? Number(reportData.collectionScores.marketcap).toLocaleString()
-                          : "N/A"
-                      }`
-                }
+                title="Market Cap"
+                value={`$${
+                  reportData.collectionScores?.marketcap != null
+                    ? Number(reportData.collectionScores.marketcap).toLocaleString()
+                    : "N/A"
+                }`}
               />
             </div>
           </AnimatedSection>
