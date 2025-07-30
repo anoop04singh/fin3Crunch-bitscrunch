@@ -43,8 +43,8 @@ export default function TacticalDashboard() {
   }
 
   const navItems = [
-    { id: "dashboard", icon: Monitor, label: "WALLET METRICS" },
     { id: "agents", icon: Users, label: "fin3Crunch AI" },
+    { id: "dashboard", icon: Monitor, label: "WALLET METRICS" },
     { id: "reports", icon: Target, label: "DETAILED REPORTS" },
     { id: "shame", icon: ShieldOff, label: "WALL OF SHAME" },
   ]
