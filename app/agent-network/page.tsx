@@ -54,6 +54,7 @@ export default function AgentNetworkPage() {
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [dynamicButtons, setDynamicButtons] = useState<string[]>([])
   const [loadingHint, setLoadingHint] = useState("Analyzing your query...")
+  const [hintCategory, setHintCategory] = useState("default")
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -70,6 +71,7 @@ export default function AgentNetworkPage() {
   useEffect(() => {
     if (marketAnalytics === null) {
       const fetchAnalyticsAndSummary = async () => {
+        const toastId = toast.loading("Loading initial market data...")
         setAgentNetworkState((prev) => ({ ...prev, isLoading: true, error: null }))
         try {
           const analyticsRes = await fetch("/api/bitscrunch", {
@@ -105,7 +107,7 @@ export default function AgentNetworkPage() {
             marketSummary: summaryText,
             isLoading: false,
           }))
-          toast.success("Market data loaded!")
+          toast.success("Market data loaded!", { id: toastId })
         } catch (err: any) {
           console.error("Error fetching market data:", err)
           setAgentNetworkState((prev) => ({
@@ -113,14 +115,39 @@ export default function AgentNetworkPage() {
             isLoading: false,
             error: `Market Analytics Error: ${err.message}`,
           }))
-          toast.error("Failed to load market data", { description: err.message })
+          toast.error("Failed to load market data", { id: toastId, description: err.message })
         }
       }
       fetchAnalyticsAndSummary()
     }
   }, [marketAnalytics, setAgentNetworkState])
 
-  // Show initial suggestions when chat is opened
+  useEffect(() => {
+    if (isLoading) {
+      const hints = {
+        report: [
+          "Analyzing request...",
+          "Fetching collection metadata...",
+          "Aggregating analytics...",
+          "Finalizing report...",
+        ],
+        market: ["Accessing market data...", "Querying sales volume...", "Analyzing trends..."],
+        deal: ["Scanning for top deals...", "Evaluating deal scores...", "Compiling opportunities..."],
+        default: ["Connecting to fin3Crunch AI...", "Querying BitsCrunch APIs...", "Parsing response..."],
+      }
+      const selectedHints = hints[hintCategory as keyof typeof hints]
+      let hintIndex = 0
+      setLoadingHint(selectedHints[hintIndex])
+
+      const interval = setInterval(() => {
+        hintIndex = (hintIndex + 1) % selectedHints.length
+        setLoadingHint(selectedHints[hintIndex])
+      }, 1500)
+
+      return () => clearInterval(interval)
+    }
+  }, [isLoading, hintCategory])
+
   useEffect(() => {
     if (chatActive && messages.length === 1) {
       const initialSuggestions = [
@@ -147,7 +174,6 @@ export default function AgentNetworkPage() {
   const generateSuggestions = (lastBotMessage: Message) => {
     let newSuggestions: string[] = []
 
-    // Contextual suggestions based on last message
     if (lastBotMessage.data?.endpoint?.includes("top-deals") && lastBotMessage.data.detailedData?.length > 0) {
       const firstDeal = lastBotMessage.data.detailedData[0]
       newSuggestions.push(`Tell me more about ${firstDeal.collection_name} #${firstDeal.token_id}`)
@@ -162,7 +188,6 @@ export default function AgentNetworkPage() {
       }
     }
 
-    // Generic fallback suggestions
     if (newSuggestions.length === 0) {
       newSuggestions.push("What's the latest on the NFT market?")
       newSuggestions.push("Find undervalued NFTs for me.")
@@ -173,7 +198,7 @@ export default function AgentNetworkPage() {
       }
     }
 
-    setSuggestions(newSuggestions.slice(0, 4)) // Limit to 4 suggestions
+    setSuggestions(newSuggestions.slice(0, 4))
   }
 
   const handleSendMessage = async (messageContent: string) => {
@@ -182,16 +207,15 @@ export default function AgentNetworkPage() {
     const userMessage: Message = { role: "user", content: messageContent }
     const currentMessages = [...messages, userMessage]
 
-    // Set a dynamic hint for the loading indicator
     const lowerCaseContent = messageContent.toLowerCase()
     if (lowerCaseContent.includes("report") || lowerCaseContent.includes("analyze")) {
-      setLoadingHint("Generating detailed report...")
+      setHintCategory("report")
     } else if (lowerCaseContent.includes("market")) {
-      setLoadingHint("Fetching market insights...")
+      setHintCategory("market")
     } else if (lowerCaseContent.includes("deal")) {
-      setLoadingHint("Searching for top deals...")
+      setHintCategory("deal")
     } else {
-      setLoadingHint("Querying BitsCrunch APIs...")
+      setHintCategory("default")
     }
 
     setAgentNetworkState((prev) => ({ ...prev, messages: currentMessages, isLoading: true, error: null }))
