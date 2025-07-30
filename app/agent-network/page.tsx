@@ -53,6 +53,7 @@ export default function AgentNetworkPage() {
   const [input, setInput] = useState("")
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [dynamicButtons, setDynamicButtons] = useState<string[]>([])
+  const [loadingHint, setLoadingHint] = useState("Analyzing your query...")
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -64,13 +65,10 @@ export default function AgentNetworkPage() {
     if (chatActive) {
       scrollToBottom()
     }
-  }, [messages, chatActive])
+  }, [messages, chatActive, isLoading])
 
   useEffect(() => {
     if (marketAnalytics === null) {
-      const toastId = toast.loading("Your application will be ready in a blink...", {
-        description: "Fetching initial market analytics.",
-      })
       const fetchAnalyticsAndSummary = async () => {
         setAgentNetworkState((prev) => ({ ...prev, isLoading: true, error: null }))
         try {
@@ -107,7 +105,7 @@ export default function AgentNetworkPage() {
             marketSummary: summaryText,
             isLoading: false,
           }))
-          toast.success("Market data loaded!", { id: toastId })
+          toast.success("Market data loaded!")
         } catch (err: any) {
           console.error("Error fetching market data:", err)
           setAgentNetworkState((prev) => ({
@@ -115,7 +113,7 @@ export default function AgentNetworkPage() {
             isLoading: false,
             error: `Market Analytics Error: ${err.message}`,
           }))
-          toast.error("Failed to load market data", { id: toastId, description: err.message })
+          toast.error("Failed to load market data", { description: err.message })
         }
       }
       fetchAnalyticsAndSummary()
@@ -184,14 +182,22 @@ export default function AgentNetworkPage() {
     const userMessage: Message = { role: "user", content: messageContent }
     const currentMessages = [...messages, userMessage]
 
+    // Set a dynamic hint for the loading indicator
+    const lowerCaseContent = messageContent.toLowerCase()
+    if (lowerCaseContent.includes("report") || lowerCaseContent.includes("analyze")) {
+      setLoadingHint("Generating detailed report...")
+    } else if (lowerCaseContent.includes("market")) {
+      setLoadingHint("Fetching market insights...")
+    } else if (lowerCaseContent.includes("deal")) {
+      setLoadingHint("Searching for top deals...")
+    } else {
+      setLoadingHint("Querying BitsCrunch APIs...")
+    }
+
     setAgentNetworkState((prev) => ({ ...prev, messages: currentMessages, isLoading: true, error: null }))
     setInput("")
     setSuggestions([])
     setDynamicButtons([])
-
-    const toastId = toast.loading("fin3Crunch AI is thinking...", {
-      description: "Analyzing your query and fetching data...",
-    })
 
     try {
       const response = await fetch("/api/chat", {
@@ -216,24 +222,14 @@ export default function AgentNetworkPage() {
       const data = await response.json()
       const botMessage: Message = { role: "assistant", ...data }
 
-      let successMessage = "Here's what I found."
-      if (botMessage.reportData) {
-        successMessage = "I've generated a detailed report for you."
-      } else if (botMessage.data?.detailedData) {
-        successMessage = "Here are the top deals I found."
-      } else if (botMessage.recommendation) {
-        successMessage = "Here is my recommendation."
-      }
-
-      toast.success(successMessage, { id: toastId })
-
       setAgentNetworkState((prev) => ({ ...prev, messages: [...prev.messages, botMessage], isLoading: false }))
       generateSuggestions(botMessage)
       parseBotMessageForButtons(botMessage.content)
     } catch (err: any) {
       console.error("Error sending message:", err)
-      setAgentNetworkState((prev) => ({ ...prev, error: err.message || "An unexpected error occurred.", isLoading: false }))
-      toast.error("An error occurred", { id: toastId, description: err.message })
+      const errorMessage = err.message || "An unexpected error occurred."
+      setAgentNetworkState((prev) => ({ ...prev, error: errorMessage, isLoading: false }))
+      toast.error("An error occurred", { description: errorMessage })
     }
   }
 
@@ -328,10 +324,25 @@ export default function AgentNetworkPage() {
                 )}
               </motion.div>
             ))}
-            {isLoading && <div className="flex items-center justify-center py-4">
-              <Loader2 className="h-6 w-6 animate-spin text-teal-300" />
-              <span className="ml-3 text-neutral-400">fin3Crunch AI is thinking...</span>
-            </div>}
+            {isLoading && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+                className="flex items-start gap-3 w-full justify-start"
+              >
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-teal-500/20 border border-teal-500/30 flex items-center justify-center text-teal-300">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div className="max-w-[85%] rounded-xl shadow bg-neutral-900/50 text-neutral-300 rounded-bl-none p-3">
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-teal-300" />
+                    <span className="text-sm font-medium text-white">fin3Crunch AI is thinking...</span>
+                  </div>
+                  <p className="text-xs text-neutral-500 mt-1 pl-6">{loadingHint}</p>
+                </div>
+              </motion.div>
+            )}
             {error && <div className="text-red-500 text-center py-4">Error: {error}</div>}
             <div ref={messagesEndRef} />
           </div>
