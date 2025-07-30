@@ -2,8 +2,6 @@
 
 **fin3Crunch AI** is a sophisticated, AI-powered analytics platform designed to provide deep insights into the Web3 ecosystem. It combines a sleek, tactical user interface with powerful backend services to deliver real-time data on NFT collections, tokens, and wallet activity. At its core is an intelligent AI agent that allows users to query complex blockchain data using natural language.
 
- <!-- Placeholder for a project screenshot or GIF -->
-
 ---
 
 ## ✨ Features
@@ -34,46 +32,56 @@ This project is built with a modern, type-safe, and component-driven stack.
 
 ---
 
-## ⚙️ How It Works
+## ⚙️ Core Components & Workflow
 
 The application's architecture is designed for security, performance, and intelligence. It separates the frontend presentation from the data fetching and AI logic.
 
-1.  **Frontend (Next.js/React):** The user interacts with the client-side application. When a user connects their wallet or requests a report, the frontend sends a request to our internal Next.js API routes.
+### 1. The `fin3Crunch AI` Agent (The Brains)
 
-2.  **Backend Proxy (`/api/bitscrunch`):** This is the secure gateway for all Web3 data.
-    -   The frontend **never** calls the BitsCrunch API directly.
-    -   It sends a request to this proxy route with the desired endpoint and parameters.
-    -   The server-side route securely attaches the `BITSCRUNCH_API_KEY` from environment variables and forwards the request to the BitsCrunch API.
-    -   This prevents the API key from ever being exposed in the browser.
+The heart of the application is the conversational AI agent, which understands user queries and fetches the precise data needed to answer them.
 
-3.  **AI Chat Logic (`/api/chat`):** This is the brain of the application.
-    -   When a user sends a message, the entire chat history is sent to this endpoint.
-    -   The endpoint uses the **Google Gemini** model, which has been provided with a detailed system prompt and two powerful "tools" (functions) it can call: `getCollectionOverview` and `queryNFTData`.
-    -   **Function Calling:** Gemini analyzes the user's prompt and decides which tool, if any, is needed to answer the question. It determines the necessary parameters (e.g., contract address, token ID).
-    -   **Tool Execution:** The backend executes the function chosen by the AI. This function then calls our `/api/bitscrunch` proxy to fetch the required data.
-    -   **Response Generation:** The data from the BitsCrunch API is returned to the Gemini model. The model then uses this data to formulate a final, human-readable answer, which is sent back to the user.
+-   **Technology:** The agent is powered by **Google Gemini**, accessed via the Vercel AI SDK in the `/api/chat` route.
 
----
+-   **Core Mechanism: Function Calling:** The AI's true power lies in its ability to use "tools" (functions). Instead of just generating text, Gemini can analyze a user's prompt and decide to call a specific function to get live data from the BitsCrunch API. This ensures answers are accurate and up-to-date.
 
-### Key BitsCrunch API Endpoints Used
+-   **The Tools:** The AI has two primary tools at its disposal:
+    1.  `queryNFTData`: Used for simple, direct questions about a single metric (e.g., "what's the floor price?", "get me the metadata"). It calls a single, specific BitsCrunch endpoint.
+    2.  `getCollectionOverview`: This is the power tool, used for broad, complex requests (e.g., "give me a full analysis of a collection," "is this NFT a good buy?"). It makes multiple, parallel API calls to BitsCrunch to gather a complete picture (metadata, analytics, scores, whale data, price estimates) and then presents it in a structured `ReportCard` component.
 
-The AI agent is empowered to use a wide range of BitsCrunch endpoints. Here are some of the key ones:
+-   **The Process:**
+    1.  A user sends a message (e.g., "Tell me about BAYC #8817").
+    2.  The query, along with chat history and a detailed system prompt, is sent to the `/api/chat` route.
+    3.  Gemini analyzes the query and determines that the `getCollectionOverview` tool is needed with the appropriate `contract_address` and `token_id`.
+    4.  The backend executes this function, which makes several calls to our secure `/api/bitscrunch` proxy.
+    5.  The structured data from BitsCrunch is returned to the Gemini model.
+    6.  Gemini uses this data to formulate a human-readable summary and selects the appropriate UI components (like `ReportCard`, `MetricsCard`, `LineChartCard`) to visually represent the information.
 
--   **Wallet Analytics:**
-    -   `/wallet/balance/nft`: To fetch all NFT holdings for a connected wallet.
-    -   `/wallet/balance/token`: To fetch all ERC20 token holdings.
-    -   `/wallet/score`: To calculate a wallet's risk and activity score.
--   **NFT & Collection Data:**
-    -   `/nft/metadata` & `/nft/collection/metadata`: For basic information and images.
-    -   `/nft/collection/analytics`: For market data like volume, sales, and floor price.
-    -   `/nft/collection/scores`: For metrics like market cap and average price.
-    -   `/nft/collection/whales`: To identify large holders in a collection.
-    -   `/nft/liquify/price_estimate`: For AI-powered price predictions for specific NFTs.
--   **Market Intelligence:**
-    -   `/nft/market-insights/analytics`: For a high-level overview of the entire NFT market.
-    -   `/nft/top_deals`: To find potentially undervalued NFTs.
--   **Security & Transparency:**
-    -   `/nft/washtrade` & `/nft/collection/washtrade`: To power the "Wall of Shame" by identifying suspicious trading activity.
+### 2. Detailed Reports Page
+
+This page allows users to conduct their own deep-dive analysis without using the chat interface.
+
+-   **User Input:** The user provides a collection's contract address and an optional token ID.
+-   **Backend Process:** When the "Generate" button is clicked, the frontend triggers a series of parallel API calls to the `/api/bitscrunch` proxy. It fetches data from multiple endpoints, including `/nft/collection/metadata`, `/nft/collection/analytics`, `/nft/collection/scores`, and `/nft/collection/whales`.
+-   **AI Enhancement:** After the data is fetched and displayed, the user can click **"Generate AI Summary"**. This sends all the collected report data to the `/api/gemini` route with a specific prompt, instructing the AI to act as a financial analyst and produce a concise, expert summary of the findings.
+
+### 3. Wall of Shame
+
+This feature is designed to bring transparency to the NFT market by highlighting suspicious activity.
+
+-   **Purpose:** To identify and display collections and individual NFTs with high levels of wash trading.
+-   **Mechanism:** On page load, this component fetches data directly from the BitsCrunch `/nft/collection/washtrade` and `/nft/washtrade` endpoints, sorted by the highest volume of suspicious activity.
+-   **Interactivity:** Users can click on any listed item to open a detailed modal view, which shows specific wash trading metrics and 24-hour trend charts, providing deeper insight into the manipulation patterns.
+
+### 4. The Secure API Gateway (`/api/bitscrunch`)
+
+This is the single, secure gateway for all external Web3 data requests.
+
+-   **Security First:** This architecture is a critical security feature. The frontend **never** calls the BitsCrunch API directly, and the `BITSCRUNCH_API_KEY` is never exposed in the browser.
+-   **How it Works:**
+    1.  The frontend (or the AI agent's tool-calling function) sends a request to our internal `/api/bitscrunch` route.
+    2.  The server-side code in this route receives the request, securely attaches the `BITSCRUNCH_API_KEY` from the server's environment variables.
+    3.  It then forwards the complete, authorized request to the actual BitsCrunch API.
+    4.  The response from BitsCrunch is routed back through the proxy to the client.
 
 ---
 
