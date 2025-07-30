@@ -57,7 +57,7 @@ export default function TacticalDashboard() {
           <ChevronRight
             className={cn(
               "w-4 h-4 sm:w-5 sm:h-5 transition-transform",
-              sidebarCollapsed && !isMobile ? "" : "rotate-180"
+              sidebarCollapsed && !isMobile ? "" : "rotate-180",
             )}
           />
         </Button>
@@ -73,7 +73,7 @@ export default function TacticalDashboard() {
               activeSection === item.id
                 ? "bg-teal-100 text-zinc-900"
                 : "text-neutral-400 hover:text-white hover:bg-neutral-800",
-              sidebarCollapsed && !isMobile && "justify-center"
+              sidebarCollapsed && !isMobile && "justify-center",
             )}
           >
             <item.icon className="w-5 h-5 md:w-5 md:h-5 sm:w-6 sm:h-6 flex-shrink-0" />
@@ -81,6 +81,25 @@ export default function TacticalDashboard() {
           </button>
         ))}
       </nav>
+
+      {/* New promotional footer */}
+      {(!sidebarCollapsed || isMobile) && (
+        <div className="mt-auto text-center text-xs text-neutral-500 space-y-2 py-4">
+          <p>
+            Made with love by{" "}
+            <a
+              href="https://github.com/anoop04singh"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-neutral-400 hover:text-teal-300 underline"
+            >
+              Anoop Singh
+            </a>{" "}
+            ❤️
+          </p>
+          <p>Built using Gemini and BitsCrunch</p>
+        </div>
+      )}
     </div>
   )
 
@@ -90,7 +109,7 @@ export default function TacticalDashboard() {
       <div
         className={cn(
           "hidden md:flex flex-col bg-black/30 backdrop-blur-lg border-r border-neutral-800 transition-all duration-300 h-full",
-          sidebarCollapsed ? "w-16" : "w-72"
+          sidebarCollapsed ? "w-16" : "w-72",
         )}
       >
         <SidebarContent isMobile={false} />
@@ -100,7 +119,7 @@ export default function TacticalDashboard() {
       <div
         className={cn(
           "fixed md:hidden top-0 left-0 h-full w-72 bg-black/30 backdrop-blur-lg border-r border-neutral-800 transition-transform duration-300 z-50",
-          mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          mobileSidebarOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
         <SidebarContent isMobile={true} />
