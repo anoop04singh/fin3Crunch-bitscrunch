@@ -1,14 +1,19 @@
-# fin3Crunch AI - Intelligent Web3 Analytics Dashboard
+# fin3Crunch - Intelligent Web3 Analytics Dashboard
 
-**fin3Crunch AI** is a sophisticated, AI-powered analytics platform designed to provide deep insights into the Web3 ecosystem. It combines a sleek, tactical user interface with powerful backend services to deliver real-time data on NFT collections, tokens, and wallet activity. At its core is an intelligent AI agent that allows users to query complex blockchain data using natural language.
+
+<img width="2000" height="620" alt="fin3crunchLogoNarrow" src="https://github.com/user-attachments/assets/6e919812-2ee9-4a54-a31d-6b0884c4027b" />
+
+
+
+**fin3Crunch AI** is a sophisticated, **AI-powered analytics platform** designed to provide deep insights into the Web3 ecosystem. It combines a sleek, minimal user interface with powerful backend services to deliver real-time data on NFT collections, tokens, and wallet activity. At its core is an **intelligent AI agent** that allows users to query complex **blockchain data using natural language.**
 
 ---
 
 ## ✨ Features
 
--   **🤖 AI-Powered Chat (`fin3Crunch AI`):** A conversational interface that leverages Google Gemini and BitsCrunch APIs to answer complex questions about the NFT market, specific tokens, collections, and wallet analytics.
+-   **🤖 AI-Powered Chat (`fin3Crunch AI`):** A conversational interface that leverages Google Gemini and BitsCrunch APIs to answer questions about the NFT market, specific tokens, collections, and wallet analytics.
 -   **📊 Personalized Dashboard:** Users can connect their MetaMask wallet to get a personalized overview of their NFT and ERC20 token holdings, total asset value, and a detailed wallet risk score.
--   **📈 In-Depth NFT & Collection Reports:** Generate comprehensive on-demand reports for any NFT collection or individual token on the Ethereum blockchain, including market analytics, price estimates, rarity scores, and whale activity.
+-   **📈 In-Depth NFT & Collection Reports:** Generate comprehensive on-demand reports for any NFT collection or individual token on the Ethereum blockchain, including market analytics, price estimates, charts and whale activity.
 -   **🛡️ Wall of Shame:** A dedicated section that highlights NFT collections and specific tokens with the highest levels of wash trading activity, promoting transparency in the ecosystem.
 -   **🎨 Dynamic & Responsive UI:** A modern, responsive interface built with shadcn/ui and Tailwind CSS, featuring smooth animations and a unique dynamic background that reacts to mouse movement.
 -   **🔐 Secure Backend Proxy:** All external API calls are routed through a secure Next.js backend, ensuring that sensitive API keys are never exposed on the client-side.
@@ -55,6 +60,9 @@ The heart of the application is the conversational AI agent, which understands u
     4.  The backend executes this function, which makes several calls to our secure `/api/bitscrunch` proxy.
     5.  The structured data from BitsCrunch is returned to the Gemini model.
     6.  Gemini uses this data to formulate a human-readable summary and selects the appropriate UI components (like `ReportCard`, `MetricsCard`, `LineChartCard`) to visually represent the information.
+ 
+<img width="1919" height="786" alt="image" src="https://github.com/user-attachments/assets/46f477d9-2357-4d26-85f2-a18233a5f6ea" />
+
 
 ### 2. Detailed Reports Page
 
@@ -64,6 +72,9 @@ This page allows users to conduct their own deep-dive analysis without using the
 -   **Backend Process:** When the "Generate" button is clicked, the frontend triggers a series of parallel API calls to the `/api/bitscrunch` proxy. It fetches data from multiple endpoints, including `/nft/collection/metadata`, `/nft/collection/analytics`, `/nft/collection/scores`, and `/nft/collection/whales`.
 -   **AI Enhancement:** After the data is fetched and displayed, the user can click **"Generate AI Summary"**. This sends all the collected report data to the `/api/gemini` route with a specific prompt, instructing the AI to act as a financial analyst and produce a concise, expert summary of the findings.
 
+<img width="535" height="744" alt="image" src="https://github.com/user-attachments/assets/f02c1ba8-1198-4de2-9d29-12b6f17b7c9b" />
+
+
 ### 3. Wall of Shame
 
 This feature is designed to bring transparency to the NFT market by highlighting suspicious activity.
@@ -71,6 +82,12 @@ This feature is designed to bring transparency to the NFT market by highlighting
 -   **Purpose:** To identify and display collections and individual NFTs with high levels of wash trading.
 -   **Mechanism:** On page load, this component fetches data directly from the BitsCrunch `/nft/collection/washtrade` and `/nft/washtrade` endpoints, sorted by the highest volume of suspicious activity.
 -   **Interactivity:** Users can click on any listed item to open a detailed modal view, which shows specific wash trading metrics and 24-hour trend charts, providing deeper insight into the manipulation patterns.
+
+  
+<img width="1919" height="725" alt="Screenshot 2025-07-30 231528" src="https://github.com/user-attachments/assets/3d2a25bd-10bd-47a1-bd52-fe430d9f5242" />
+
+<img width="822" height="822" alt="image" src="https://github.com/user-attachments/assets/e9978132-29c5-44d9-8ab7-8c3272c4a657" />
+
 
 ### 4. The Secure API Gateway (`/api/bitscrunch`)
 
@@ -120,8 +137,8 @@ BITSCRUNCH_API_KEY="YOUR_BITSCRUNCH_API_KEY"
 GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
 ```
 
--   **`BITSCRUNCH_API_KEY`**: Get your free API key from the [BitsCrunch Developer Portal](https://docs.bitscrunch.com/).
--   **`GEMINI_API_KEY`**: Get your free API key from [Google AI Studio](https://aistudio.google.com/app/apikey).
+-   **`BITSCRUNCH_API_KEY`**: Get your testing API key from the [Unleash NFTS](https://unleashnfts.com/).
+-   **`GEMINI_API_KEY`**: Get your API key from [Google AI Studio](https://aistudio.google.com/app/apikey).
 
 ### 4. Run the Development Server
 
@@ -152,12 +169,12 @@ Here are some examples of what you can ask the AI agent to see its capabilities:
 -   "What is my wallet's risk score?"
 -   "Analyze my wallet's holdings."
 
-#### Collection Analysis (You may be prompted for a contract address)
+#### Collection Analysis (You may be prompted for a contract address, if it is not in context.)
 -   "Give me a full report on the Pudgy Penguins collection."
 -   "What is the floor price of Bored Ape Yacht Club?"
 -   "Who are the biggest whales in the Azuki collection?"
 
-#### Specific NFT Analysis
+#### Specific NFT Analysis (You may be prompted for a contract address, if it is not in context.)
 -   "Tell me everything about BAYC #8817."
 -   "What's the estimated price for CryptoPunk #7523?"
 -   "Is it a good time to buy MAYC #101?"
