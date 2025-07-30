@@ -26,7 +26,7 @@ import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
 
 export default function TacticalDashboard() {
-  const [activeSection, setActiveSection] = useState("dashboard")
+  const [activeSection, setActiveSection] = useState("agents")
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
@@ -34,7 +34,7 @@ export default function TacticalDashboard() {
   const { walletAddress, setWalletAddress } = useAppContext()
 
   const pageTitles: { [key: string]: string } = {
-    dashboard: "DASHBOARD",
+    dashboard: "WALLET METRICS",
     agents: "fin3Crunch AI",
     reports: "DETAILED REPORTS",
     shame: "WALL OF SHAME",
@@ -43,7 +43,7 @@ export default function TacticalDashboard() {
   }
 
   const navItems = [
-    { id: "dashboard", icon: Monitor, label: "DASHBOARD" },
+    { id: "dashboard", icon: Monitor, label: "WALLET METRICS" },
     { id: "agents", icon: Users, label: "fin3Crunch AI" },
     { id: "reports", icon: Target, label: "DETAILED REPORTS" },
     { id: "shame", icon: ShieldOff, label: "WALL OF SHAME" },

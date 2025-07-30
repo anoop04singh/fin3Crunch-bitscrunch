@@ -26,6 +26,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { XCircle } from "lucide-react"
 import { sleep } from "@/lib/utils"
 import { AnimatedSection } from "@/components/animated-section"
+import { toast } from "sonner"
 
 // Interfaces
 interface NftMetadata {
@@ -230,6 +231,9 @@ export default function DetailedReportsPage() {
   }
 
   const fetchReportData = async () => {
+    const toastId = toast.loading("Generating your report...", {
+      description: "This may take a moment as we analyze on-chain data.",
+    })
     setLoadingReport(true)
     setReportError(null)
     setAiSummary(null)
@@ -310,8 +314,11 @@ export default function DetailedReportsPage() {
         recommendation,
         collectionTrends,
       })
+      toast.success("Report Generated Successfully", { id: toastId })
     } catch (err: any) {
-      setReportError(`Failed to generate report: ${err.message || "An unknown error occurred."}`)
+      const errorMessage = `Failed to generate report: ${err.message || "An unknown error occurred."}`
+      setReportError(errorMessage)
+      toast.error("Failed to Generate Report", { id: toastId, description: err.message || "An unknown error occurred." })
     } finally {
       setLoadingReport(false)
     }
