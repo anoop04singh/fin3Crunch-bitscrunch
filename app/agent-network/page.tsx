@@ -21,6 +21,7 @@ import { LineChartCard } from "@/components/chat/line-chart-card"
 import { AnimatedSection } from "@/components/animated-section"
 import { motion } from "framer-motion"
 import { ReportCard } from "@/components/chat/report-card"
+import { toast } from "sonner"
 
 interface Message {
   role: "user" | "assistant"
@@ -67,6 +68,9 @@ export default function AgentNetworkPage() {
 
   useEffect(() => {
     if (marketAnalytics === null) {
+      const toastId = toast.loading("Your application will be ready in a blink...", {
+        description: "Fetching initial market analytics.",
+      })
       const fetchAnalyticsAndSummary = async () => {
         setAgentNetworkState((prev) => ({ ...prev, isLoading: true, error: null }))
         try {
@@ -103,6 +107,7 @@ export default function AgentNetworkPage() {
             marketSummary: summaryText,
             isLoading: false,
           }))
+          toast.success("Market data loaded!", { id: toastId })
         } catch (err: any) {
           console.error("Error fetching market data:", err)
           setAgentNetworkState((prev) => ({
@@ -110,6 +115,7 @@ export default function AgentNetworkPage() {
             isLoading: false,
             error: `Market Analytics Error: ${err.message}`,
           }))
+          toast.error("Failed to load market data", { id: toastId, description: err.message })
         }
       }
       fetchAnalyticsAndSummary()
@@ -183,6 +189,10 @@ export default function AgentNetworkPage() {
     setSuggestions([])
     setDynamicButtons([])
 
+    const toastId = toast.loading("fin3Crunch AI is thinking...", {
+      description: "Analyzing your query and fetching data...",
+    })
+
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
@@ -205,12 +215,25 @@ export default function AgentNetworkPage() {
 
       const data = await response.json()
       const botMessage: Message = { role: "assistant", ...data }
+
+      let successMessage = "Here's what I found."
+      if (botMessage.reportData) {
+        successMessage = "I've generated a detailed report for you."
+      } else if (botMessage.data?.detailedData) {
+        successMessage = "Here are the top deals I found."
+      } else if (botMessage.recommendation) {
+        successMessage = "Here is my recommendation."
+      }
+
+      toast.success(successMessage, { id: toastId })
+
       setAgentNetworkState((prev) => ({ ...prev, messages: [...prev.messages, botMessage], isLoading: false }))
       generateSuggestions(botMessage)
       parseBotMessageForButtons(botMessage.content)
     } catch (err: any) {
       console.error("Error sending message:", err)
       setAgentNetworkState((prev) => ({ ...prev, error: err.message || "An unexpected error occurred.", isLoading: false }))
+      toast.error("An error occurred", { id: toastId, description: err.message })
     }
   }
 
@@ -326,7 +349,7 @@ export default function AgentNetworkPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleSuggestionClick(s)}
-                      className="border-neutral-700 bg-neutral-800/50 text-neutral-300 hover:bg-neutral-700 hover:text-white transition-all duration-200 text-xs hover:border-neutral-600 hover:scale-105 active:scale-100"
+                      className="border-neutral-700 bg-neutral-800/50 text-neutral-300 hover:bg-neutral-700 hover:text-white transition-all duration-200 text-xs hover:border-teal-500/50 hover:shadow-md hover:shadow-teal-500/10"
                     >
                       {s}
                     </Button>
@@ -334,20 +357,20 @@ export default function AgentNetworkPage() {
                 ))}
               </motion.div>
             )}
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2 bg-neutral-900/50 border border-neutral-700 rounded-xl p-1.5">
               <Input
                 placeholder="Ask fin3Crunch AI anything..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && !isLoading && handleSendMessage(input)}
-                className="flex-1 bg-neutral-900 border-neutral-700 text-white placeholder-neutral-400 h-11 focus:ring-2 focus:ring-teal-500"
+                className="flex-1 bg-transparent border-none text-white placeholder-neutral-400 h-10 focus:ring-0"
                 disabled={isLoading}
                 autoFocus
               />
               <Button
                 onClick={() => handleSendMessage(input)}
                 disabled={isLoading || !input.trim()}
-                className="bg-teal-500 hover:bg-teal-600 text-white h-11 w-11"
+                className="bg-teal-500 hover:bg-teal-600 text-white h-10 w-10 rounded-lg"
                 size="icon"
               >
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
