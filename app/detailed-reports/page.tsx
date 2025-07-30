@@ -5,7 +5,6 @@ import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import {
   Loader2,
   FileText,
@@ -225,9 +224,6 @@ export default function DetailedReportsPage() {
   }
 
   const fetchReportData = async () => {
-    const toastId = toast.loading("Generating your report...", {
-      description: "This may take a moment as we analyze on-chain data.",
-    })
     setLoadingReport(true)
     setReportError(null)
     setAiSummary(null)
@@ -235,6 +231,34 @@ export default function DetailedReportsPage() {
 
     const isSpecificNft = !!inputNftTokenId.trim()
     const contractAddress = inputNftContract.trim()
+
+    const loadingMessages = [
+      "Fetching collection metadata...",
+      "Analyzing market trends (30d)...",
+      "Calculating collection scores...",
+      "Identifying whale activity...",
+      "Compiling final report...",
+    ]
+
+    if (isSpecificNft) {
+      loadingMessages.splice(1, 0, "Retrieving specific token details...")
+      loadingMessages.splice(4, 0, "Estimating token price...")
+    }
+
+    const toastId = toast.loading("Generating your report...", {
+      description: loadingMessages[0],
+    })
+
+    let messageIndex = 1
+    const intervalId = setInterval(() => {
+      if (messageIndex < loadingMessages.length) {
+        toast.loading("Generating your report...", {
+          id: toastId,
+          description: loadingMessages[messageIndex],
+        })
+        messageIndex++
+      }
+    }, 1500)
 
     try {
       const promises = [
@@ -304,6 +328,7 @@ export default function DetailedReportsPage() {
       setReportError(errorMessage)
       toast.error("Failed to Generate Report", { id: toastId, description: err.message || "An unknown error occurred." })
     } finally {
+      clearInterval(intervalId)
       setLoadingReport(false)
     }
   }
@@ -335,50 +360,38 @@ export default function DetailedReportsPage() {
 
   return (
     <div className="p-6 space-y-8">
-      <AnimatedSection>
-        <div className="text-center max-w-2xl mx-auto">
-          <h1 className="text-3xl font-bold text-white tracking-wider">NFT ANALYSIS REPORT</h1>
-          <p className="text-base text-neutral-400 mt-2">
-            Generate in-depth analytics for any NFT collection or specific token on the Ethereum blockchain.
-          </p>
-        </div>
-      </AnimatedSection>
-
-      <AnimatedSection delay={0.1}>
-        <div className="max-w-3xl mx-auto bg-neutral-900/50 border border-neutral-800 rounded-lg p-4">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-            <div className="md:col-span-2">
-              <Label htmlFor="nft-contract" className="text-neutral-400 text-xs mb-2 block">
-                Collection Contract Address
-              </Label>
-              <Input
-                id="nft-contract"
-                placeholder="0x..."
-                value={inputNftContract}
-                onChange={(e) => setInputNftContract(e.target.value)}
-                className="bg-neutral-800 border-neutral-700 text-white placeholder-neutral-500"
-              />
-            </div>
-            <div className="md:col-span-2">
-              <Label htmlFor="nft-token-id" className="text-neutral-400 text-xs mb-2 block">
-                Token ID (Optional)
-              </Label>
-              <Input
-                id="nft-token-id"
-                placeholder="e.g., 1234"
-                value={inputNftTokenId}
-                onChange={(e) => setInputNftTokenId(e.target.value)}
-                className="bg-neutral-800 border-neutral-700 text-white placeholder-neutral-500"
-              />
-            </div>
-            <Button
-              onClick={fetchReportData}
-              disabled={isGenerateButtonDisabled}
-              className="bg-teal-500 hover:bg-teal-600 text-white w-full md:col-span-1"
-            >
-              {loadingReport ? <Loader2 className="h-4 w-4 animate-spin" /> : "Analyze"}
-            </Button>
-          </div>
+      <AnimatedSection className="text-center max-w-3xl mx-auto">
+        <h1 className="text-3xl font-bold text-white tracking-wider">NFT ANALYSIS REPORT</h1>
+        <p className="text-base text-neutral-400 mt-2">
+          Generate in-depth analytics for any NFT collection or specific token on the Ethereum blockchain.
+        </p>
+        <div className="flex items-center gap-2 mt-8 w-full">
+          <Input
+            id="nft-contract"
+            placeholder="Collection Contract Address"
+            value={inputNftContract}
+            onChange={(e) => setInputNftContract(e.target.value)}
+            className="bg-neutral-900/50 border-neutral-700 text-white placeholder-neutral-500 flex-grow h-12 text-base"
+          />
+          <Input
+            id="nft-token-id"
+            placeholder="Token ID"
+            value={inputNftTokenId}
+            onChange={(e) => setInputNftTokenId(e.target.value)}
+            className="bg-neutral-900/50 border-neutral-700 text-white placeholder-neutral-500 w-32 h-12 text-base"
+          />
+          <Button
+            onClick={fetchReportData}
+            disabled={isGenerateButtonDisabled}
+            size="icon"
+            className="bg-teal-500 hover:bg-teal-600 text-white h-12 w-12 flex-shrink-0"
+          >
+            {loadingReport ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <ChevronRight className="h-5 w-5" />
+            )}
+          </Button>
         </div>
       </AnimatedSection>
 
@@ -441,6 +454,7 @@ export default function DetailedReportsPage() {
                   className="bg-teal-500 hover:bg-teal-600 text-white"
                   disabled={loadingAi}
                 >
+                  {loadingAi ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   Generate AI Summary
                 </Button>
               )}
