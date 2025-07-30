@@ -79,7 +79,6 @@ export async function POST(req: NextRequest) {
         nftPriceEstimate,
         nftScores,
         collectionWhales,
-        floorVsEstimateDiffPercent,
         recommendation,
         collectionTrends,
       } = reportData
@@ -126,7 +125,6 @@ export async function POST(req: NextRequest) {
         
         **Specific NFT Analysis (Token ID: ${reportData.nftMetadata?.token_id}):**
         - Estimated Price: $${nftPriceEstimate?.price_estimate?.toFixed(2) || "N/A"}
-        - Price vs. Floor: ${floorVsEstimateDiffPercent?.toFixed(2) || "N/A"}%
         - Rarity Score: ${nftScores?.rarity_score?.toFixed(2) || "N/A"}
         - Recommendation: ${recommendation || "N/A"}
         `

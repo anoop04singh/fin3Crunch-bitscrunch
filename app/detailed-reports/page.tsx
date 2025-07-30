@@ -102,7 +102,6 @@ interface DetailedReportData {
   nftScores?: NftScores
   collectionScores?: CollectionScores
   collectionWhales?: CollectionWhales
-  floorVsEstimateDiffPercent?: number
   recommendation?: string
   collectionTrends?: TrendData[]
 }
@@ -289,11 +288,6 @@ export default function DetailedReportsPage() {
       const floorPrice = collectionAnalytics?.floor_price_usd
       const estimatedPrice = nftPriceEstimate?.price_estimate
 
-      const floorVsEstimateDiffPercent =
-        floorPrice != null && estimatedPrice != null && Number(floorPrice) !== 0
-          ? ((Number(estimatedPrice) - Number(floorPrice)) / Number(floorPrice)) * 100
-          : undefined
-
       const recommendation = getRecommendation(
         estimatedPrice != null ? Number(estimatedPrice) : undefined,
         floorPrice != null ? Number(floorPrice) : undefined,
@@ -310,7 +304,6 @@ export default function DetailedReportsPage() {
         nftMetadata,
         nftPriceEstimate,
         nftScores,
-        floorVsEstimateDiffPercent,
         recommendation,
         collectionTrends,
       })
@@ -488,19 +481,6 @@ export default function DetailedReportsPage() {
                       ? Number(reportData.nftPriceEstimate.price_estimate).toFixed(2)
                       : "N/A"
                   }`}
-                  subValue={
-                    <span
-                      className={`font-bold flex items-center gap-1 ${
-                        (reportData.floorVsEstimateDiffPercent ?? 0) >= 0 ? "text-green-500" : "text-red-500"
-                      }`}
-                    >
-                      <Percent className="w-3 h-3" />
-                      {reportData.floorVsEstimateDiffPercent != null
-                        ? Number(reportData.floorVsEstimateDiffPercent).toFixed(2)
-                        : "N/A"}
-                      % vs Floor
-                    </span>
-                  }
                 />
               )}
               <MetricItem
