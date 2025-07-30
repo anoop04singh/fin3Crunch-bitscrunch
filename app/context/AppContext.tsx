@@ -55,18 +55,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     error: null,
   })
 
-  // Load wallet address from localStorage on initial render
-  useEffect(() => {
-    try {
-      const storedWalletAddress = localStorage.getItem("walletAddress")
-      if (storedWalletAddress) {
-        setWalletAddressState(storedWalletAddress)
-      }
-    } catch (error) {
-      console.error("Could not access localStorage:", error)
-    }
-  }, [])
-
   const setWalletAddress = (address: string | null) => {
     setWalletAddressState(address)
     try {

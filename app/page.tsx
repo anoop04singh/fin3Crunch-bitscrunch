@@ -2,7 +2,17 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import { ChevronRight, Monitor, Settings, Shield, Target, Users, Bell, RefreshCw, ShieldOff, Menu } from "lucide-react"
+import {
+  ChevronRight,
+  Monitor,
+  Target,
+  Users,
+  ShieldOff,
+  Menu,
+  Wallet,
+  LogOut,
+  Loader2,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import AgentNetworkPage from "./agent-network/page"
 import IntelligencePage from "./intelligence/page"
@@ -11,11 +21,17 @@ import DashboardPage from "./dashboard/page"
 import DetailedReportsPage from "./detailed-reports/page"
 import WallOfShamePage from "./wall-of-shame/page"
 import { cn } from "@/lib/utils"
+import { useAppContext } from "./context/AppContext"
+import { toast } from "sonner"
+import { motion, AnimatePresence } from "framer-motion"
 
 export default function TacticalDashboard() {
   const [activeSection, setActiveSection] = useState("dashboard")
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false) // For desktop
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false) // For mobile
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+  const [isConnecting, setIsConnecting] = useState(false)
+
+  const { walletAddress, setWalletAddress } = useAppContext()
 
   const pageTitles: { [key: string]: string } = {
     dashboard: "DASHBOARD",
@@ -31,13 +47,45 @@ export default function TacticalDashboard() {
     { id: "agents", icon: Users, label: "fin3Crunch AI" },
     { id: "reports", icon: Target, label: "DETAILED REPORTS" },
     { id: "shame", icon: ShieldOff, label: "WALL OF SHAME" },
-    // { id: "intelligence", icon: Shield, label: "INTELLIGENCE" },
-    // { id: "systems", icon: Settings, label: "SYSTEMS" },
   ]
 
   const handleNavClick = (sectionId: string) => {
     setActiveSection(sectionId)
-    setMobileSidebarOpen(false) // Close mobile sidebar on navigation
+    setMobileSidebarOpen(false)
+  }
+
+  const connectWallet = async () => {
+    if (typeof window.ethereum !== "undefined") {
+      try {
+        setIsConnecting(true)
+        const accounts = await window.ethereum.request({ method: "eth_requestAccounts" })
+        if (accounts.length > 0) {
+          setWalletAddress(accounts[0])
+          toast.success("Wallet Connected", {
+            description: `${accounts[0].substring(0, 6)}...${accounts[0].substring(accounts[0].length - 4)}`,
+          })
+        } else {
+          toast.error("No accounts found", {
+            description: "Please ensure MetaMask has accounts.",
+          })
+        }
+      } catch (err: any) {
+        toast.error("Connection Failed", {
+          description: err.message || "An unknown error occurred.",
+        })
+      } finally {
+        setIsConnecting(false)
+      }
+    } else {
+      toast.error("MetaMask Not Found", {
+        description: "Please install the MetaMask extension to connect your wallet.",
+      })
+    }
+  }
+
+  const disconnectWallet = () => {
+    setWalletAddress(null)
+    toast.info("Wallet Disconnected")
   }
 
   const SidebarContent = ({ isMobile }: { isMobile: boolean }) => (
@@ -55,10 +103,7 @@ export default function TacticalDashboard() {
           className="text-neutral-400 hover:text-teal-100"
         >
           <ChevronRight
-            className={cn(
-              "w-4 h-4 sm:w-5 sm:h-5 transition-transform",
-              sidebarCollapsed && !isMobile ? "" : "rotate-180",
-            )}
+            className={cn("w-4 h-4 sm:w-5 sm:h-5 transition-transform", sidebarCollapsed && !isMobile ? "" : "rotate-180")}
           />
         </Button>
       </div>
@@ -82,7 +127,6 @@ export default function TacticalDashboard() {
         ))}
       </nav>
 
-      {/* New promotional footer */}
       {(!sidebarCollapsed || isMobile) && (
         <div className="mt-auto text-center text-xs text-neutral-500 space-y-2 py-4">
           <p>
@@ -105,7 +149,6 @@ export default function TacticalDashboard() {
 
   return (
     <div className="flex h-screen">
-      {/* Desktop Sidebar */}
       <div
         className={cn(
           "hidden md:flex flex-col bg-black/30 backdrop-blur-lg border-r border-neutral-800 transition-all duration-300 h-full",
@@ -115,7 +158,6 @@ export default function TacticalDashboard() {
         <SidebarContent isMobile={false} />
       </div>
 
-      {/* Mobile Sidebar */}
       <div
         className={cn(
           "fixed md:hidden top-0 left-0 h-full w-72 bg-black/30 backdrop-blur-lg border-r border-neutral-800 transition-transform duration-300 z-50",
@@ -128,9 +170,7 @@ export default function TacticalDashboard() {
         <div className="fixed md:hidden inset-0 bg-black/50 z-40" onClick={() => setMobileSidebarOpen(false)} />
       )}
 
-      {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        {/* Top Toolbar */}
         <div className="h-16 bg-black/30 backdrop-blur-lg border-b border-neutral-800 flex items-center justify-between px-6">
           <div className="flex items-center gap-4">
             <Button
@@ -145,9 +185,48 @@ export default function TacticalDashboard() {
               fin3Crunch / <span className="text-teal-100">{pageTitles[activeSection]}</span>
             </div>
           </div>
+
+          <div className="flex items-center gap-3">
+            <AnimatePresence>
+              {walletAddress && (
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  className="text-xs text-neutral-400 font-mono bg-neutral-800/50 px-3 py-1.5 rounded-md border border-neutral-700 hidden sm:block"
+                >
+                  {`${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}`}
+                </motion.div>
+              )}
+            </AnimatePresence>
+            {walletAddress ? (
+              <Button
+                onClick={disconnectWallet}
+                variant="outline"
+                size="sm"
+                className="border-red-500/50 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+              >
+                <LogOut className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Disconnect</span>
+              </Button>
+            ) : (
+              <Button
+                onClick={connectWallet}
+                disabled={isConnecting}
+                size="sm"
+                className="bg-teal-500 hover:bg-teal-600 text-white"
+              >
+                {isConnecting ? (
+                  <Loader2 className="w-4 h-4 sm:mr-2 animate-spin" />
+                ) : (
+                  <Wallet className="w-4 h-4 sm:mr-2" />
+                )}
+                <span className="hidden sm:inline">{isConnecting ? "Connecting..." : "Connect Wallet"}</span>
+              </Button>
+            )}
+          </div>
         </div>
 
-        {/* Dashboard Content */}
         <div className="flex-1 overflow-y-auto">
           <div className={activeSection === "dashboard" ? "block h-full" : "hidden"}>
             <DashboardPage />

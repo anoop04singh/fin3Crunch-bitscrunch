@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Loader2, Wallet, XCircle, CheckCircle, TrendingUp, ImageIcon } from "lucide-react"
+import { Loader2, Wallet, XCircle, ImageIcon } from "lucide-react"
 import { useAppContext } from "@/app/context/AppContext"
 import { sleep } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
@@ -62,9 +62,9 @@ interface NftMetadata {
 }
 
 export default function CommandCenterPage() {
-  const { walletAddress, setWalletAddress } = useAppContext()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { walletAddress } = useAppContext()
+  const [isFetchingData, setIsFetchingData] = useState(false)
+  const [fetchError, setFetchError] = useState<string | null>(null)
 
   const [nftHoldings, setNftHoldings] = useState<NftHolding[]>([])
   const [erc20Holdings, setErc20Holdings] = useState<Erc20Holding[]>([])
@@ -75,31 +75,6 @@ export default function CommandCenterPage() {
   const [nftMetadata, setNftMetadata] = useState<NftMetadata | null>(null)
   const [loadingNftMetadata, setLoadingNftMetadata] = useState(false)
   const [nftMetadataError, setNftMetadataError] = useState<string | null>(null)
-
-  const connectWallet = async () => {
-    if (typeof window.ethereum !== "undefined") {
-      try {
-        setLoading(true)
-        setError(null)
-        const accounts = await window.ethereum.request({ method: "eth_requestAccounts" })
-        if (accounts.length > 0) {
-          setWalletAddress(accounts[0])
-          console.log("Wallet connected:", accounts[0])
-        } else {
-          setError("No accounts found. Please ensure MetaMask has accounts.")
-          console.error("MetaMask: No accounts found.")
-        }
-      } catch (err: any) {
-        console.error("Error connecting to MetaMask:", err)
-        setError(`Failed to connect wallet: ${err.message || "Unknown error"}`)
-      } finally {
-        setLoading(false)
-      }
-    } else {
-      setError("MetaMask is not installed. Please install it to connect your wallet.")
-      console.error("MetaMask: Not installed.")
-    }
-  }
 
   const fetchApiData = useCallback(async (endpoint: string, walletAddress: string, params?: any) => {
     const maxRetries = 5
@@ -150,8 +125,8 @@ export default function CommandCenterPage() {
 
   const fetchWalletData = useCallback(
     async (address: string) => {
-      setLoading(true)
-      setError(null)
+      setIsFetchingData(true)
+      setFetchError(null)
       try {
         const [nftHoldingsData, erc20HoldingsData, scoreData] = await Promise.all([
           fetchApiData("/wallet/balance/nft", address),
@@ -205,9 +180,9 @@ export default function CommandCenterPage() {
           setTotalAssetsValue(0)
         }
       } catch (err: any) {
-        setError(`Failed to load data: ${err.message || "Unknown error"}`)
+        setFetchError(`Failed to load data: ${err.message || "Unknown error"}`)
       } finally {
-        setLoading(false)
+        setIsFetchingData(false)
       }
     },
     [fetchApiData],
@@ -241,48 +216,31 @@ export default function CommandCenterPage() {
     <div className="p-6 space-y-12">
       {!walletAddress ? (
         <AnimatedSection>
-          <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)]">
-            <Card className="bg-neutral-900/50 border border-neutral-800 p-8 text-center max-w-md">
-              <CardTitle className="text-2xl font-bold text-white mb-4">Connect Your Wallet</CardTitle>
-              <p className="text-neutral-400 mb-6">
-                Link your Ethereum wallet to unlock your personalized Web3 dashboard.
-              </p>
-              <Button
-                onClick={connectWallet}
-                disabled={loading}
-                className="bg-teal-500 hover:bg-teal-600 text-white px-8 py-3 text-lg w-full"
-              >
-                {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Wallet className="mr-2 h-5 w-5" />}
-                {loading ? "Connecting..." : "Connect MetaMask"}
-              </Button>
-              {error && (
-                <p className="text-red-500 mt-4 text-sm flex items-center justify-center">
-                  <XCircle className="w-4 h-4 mr-2" /> {error}
-                </p>
-              )}
-            </Card>
+          <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] text-center">
+            <Wallet className="w-16 h-16 text-neutral-700 mb-4" />
+            <h2 className="text-2xl font-bold text-white">Dashboard Locked</h2>
+            <p className="text-neutral-400 mt-2 max-w-sm">
+              Please connect your wallet using the button in the top bar to view your personalized dashboard and
+              holdings.
+            </p>
           </div>
         </AnimatedSection>
       ) : (
         <>
-          <div className="text-neutral-400 text-sm">
-            Connected Wallet: <span className="text-teal-200 font-mono">{walletAddress}</span>
-          </div>
-
-          {loading && (
+          {isFetchingData && (
             <div className="flex items-center justify-center py-10">
               <Loader2 className="h-8 w-8 animate-spin text-teal-200" />
               <span className="ml-3 text-neutral-400">Loading wallet data...</span>
             </div>
           )}
 
-          {error && !loading && (
+          {fetchError && !isFetchingData && (
             <div className="text-red-500 mt-4 text-center flex items-center justify-center">
-              <XCircle className="w-5 h-5 mr-2" /> {error}
+              <XCircle className="w-5 h-5 mr-2" /> {fetchError}
             </div>
           )}
 
-          {!loading && !error && (
+          {!isFetchingData && !fetchError && (
             <div className="space-y-16">
               <AnimatedSection delay={0.1}>
                 <div className="text-center">
