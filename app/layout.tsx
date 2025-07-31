@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { Providers } from './providers'
 import DynamicBackground from '@/components/dynamic-background'
-import { Analytics } from "@vercel/analytics/next"
 
 export const metadata: Metadata = {
   title: 'fin3crunch',
@@ -23,7 +22,6 @@ export default function RootLayout({
         <DynamicBackground>
           <Providers>{children}</Providers>
         </DynamicBackground>
-        <Analytics />
       </body>
     </html>
   )
