@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
   const { endpoint, walletAddress, params } = await req.json()
   // IMPORTANT: Replace 'YOUR_BITSCRUNCH_API_KEY' with your actual key
   // and set it as an environment variable in Vercel (e.g., BITSCRUNCH_API_KEY)
-  const BITSCRUNCH_API_KEY = process.env.BITSCRUNCH_API_KEY || "1846c8cf79dc4cd8bd5a38ef707b7ace"
+  const BITSCRUNCH_API_KEY = process.env.BITSCRUNCH_API_KEY
 
   // walletAddress is not strictly required for /nft/metadata, /nft/collection/metadata, /nft/liquify/price_estimate, etc.
   // Only enforce if it's a wallet-specific endpoint.
