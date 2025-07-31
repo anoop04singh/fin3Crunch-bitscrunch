@@ -52,11 +52,11 @@ interface CollectionAnalytics {
   sales: number
   transactions: number
   floor_price_usd: number
-  block_dates: string
-  volume_trend: string
-  sales_trend: string
-  transactions_trend: string
-  assets_trend: string
+  block_dates: string | string[]
+  volume_trend: string | number[]
+  sales_trend: string | number[]
+  transactions_trend: string | number[]
+  assets_trend: string | number[]
   volume_change?: number
   sales_change?: number
 }
@@ -182,20 +182,21 @@ export default function DetailedReportsPage() {
 
   const parseTrendData = (analytics: CollectionAnalytics): TrendData[] => {
     try {
-      const parse = (str: string | null | undefined) => {
-        if (!str || typeof str !== "string" || str.length <= 2) return []
-        return str
+      const safeParse = (data: string | any[] | null | undefined): any[] => {
+        if (Array.isArray(data)) return data
+        if (!data || typeof data !== "string" || data.length <= 2) return []
+        return data
           .slice(1, -1)
           .split(",")
           .map((s) => s.replace(/"/g, "").trim())
       }
-      const dates = parse(analytics.block_dates)
+      const dates = safeParse(analytics.block_dates)
       if (dates.length === 0) return []
 
-      const volumes = parse(analytics.volume_trend).map(Number)
-      const sales = parse(analytics.sales_trend).map(Number)
-      const transactions = parse(analytics.transactions_trend).map(Number)
-      const assets = parse(analytics.assets_trend).map(Number)
+      const volumes = safeParse(analytics.volume_trend).map(Number)
+      const sales = safeParse(analytics.sales_trend).map(Number)
+      const transactions = safeParse(analytics.transactions_trend).map(Number)
+      const assets = safeParse(analytics.assets_trend).map(Number)
 
       return dates
         .map((date, i) => ({

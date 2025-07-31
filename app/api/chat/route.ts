@@ -312,15 +312,6 @@ function normalizeBlockchainName(blockchain: string): string {
   return "ethereum" // Default to ethereum if not found
 }
 
-function parseArrayString(str: string): string[] {
-  if (!str || typeof str !== "string") return []
-  // Remove outer curly braces and split by comma, then trim and remove quotes
-  return str
-    .replace(/^{|}$/g, "")
-    .split(",")
-    .map((s) => s.trim().replace(/^"|"$/g, ""))
-}
-
 function processAndSummarizeData(rawData: any, endpoint: string): any {
   console.log("=== RAW API DATA ===")
   console.log(JSON.stringify(rawData, null, 2))
@@ -411,11 +402,11 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
           assets_change: latestData.assets_change ?? null,
         }
 
-        const blockDates = parseArrayString(latestData.block_dates || "{}")
-        const volumeTrend = parseArrayString(latestData.volume_trend || "{}").map(Number)
-        const salesTrend = parseArrayString(latestData.sales_trend || "{}").map(Number)
-        const transactionsTrend = parseArrayString(latestData.transactions_trend || "{}").map(Number)
-        const assetsTrend = parseArrayString(latestData.assets_trend || "{}").map(Number)
+        const blockDates = Array.isArray(latestData.block_dates) ? latestData.block_dates : []
+        const volumeTrend = Array.isArray(latestData.volume_trend) ? latestData.volume_trend : []
+        const salesTrend = Array.isArray(latestData.sales_trend) ? latestData.sales_trend : []
+        const transactionsTrend = Array.isArray(latestData.transactions_trend) ? latestData.transactions_trend : []
+        const assetsTrend = Array.isArray(latestData.assets_trend) ? latestData.assets_trend : []
 
         volumeChartData = blockDates.map((date: string, i: number) => ({
           date: new Date(date).toLocaleDateString(),
@@ -434,10 +425,10 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
           value: assetsTrend[i] || 0,
         }))
       } else if (endpoint.includes("market-insights-analytics")) {
-        const blockDates = parseArrayString(dataToProcess.block_dates || "{}")
-        const salesTrend = parseArrayString(dataToProcess.sales_trend || "{}").map(Number)
-        const transactionsTrend = parseArrayString(dataToProcess.transactions_trend || "{}").map(Number)
-        const volumeTrend = parseArrayString(dataToProcess.volume_trend || "{}").map(Number)
+        const blockDates = Array.isArray(dataToProcess.block_dates) ? dataToProcess.block_dates : []
+        const salesTrend = Array.isArray(dataToProcess.sales_trend) ? dataToProcess.sales_trend : []
+        const transactionsTrend = Array.isArray(dataToProcess.transactions_trend) ? dataToProcess.transactions_trend : []
+        const volumeTrend = Array.isArray(dataToProcess.volume_trend) ? dataToProcess.volume_trend : []
 
         summary = {
           total_sales: dataToProcess.sales ?? null,
@@ -479,9 +470,9 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
             .join(", "),
         }
       } else if (endpoint.includes("market-insights-holders")) {
-        const blockDates = parseArrayString(dataToProcess.block_dates || "{}")
-        const holdersTrend = parseArrayString(dataToProcess.holders_trend || "{}").map(Number)
-        const holdersWhalesTrend = parseArrayString(dataToProcess.holders_whales_trend || "{}").map(Number)
+        const blockDates = Array.isArray(dataToProcess.block_dates) ? dataToProcess.block_dates : []
+        const holdersTrend = Array.isArray(dataToProcess.holders_trend) ? dataToProcess.holders_trend : []
+        const holdersWhalesTrend = Array.isArray(dataToProcess.holders_whales_trend) ? dataToProcess.holders_whales_trend : []
 
         summary = {
           total_holders: dataToProcess.holders ?? null,
@@ -514,10 +505,10 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
             .join(", "),
         }
       } else if (endpoint.includes("market-insights-traders")) {
-        const blockDates = parseArrayString(dataToProcess.block_dates || "{}")
-        const tradersTrend = parseArrayString(dataToProcess.traders_trend || "{}").map(Number)
-        const tradersBuyersTrend = parseArrayString(dataToProcess.traders_buyers_trend || "{}").map(Number)
-        const tradersSellersTrend = parseArrayString(dataToProcess.traders_sellers_trend || "{}").map(Number)
+        const blockDates = Array.isArray(dataToProcess.block_dates) ? dataToProcess.block_dates : []
+        const tradersTrend = Array.isArray(dataToProcess.traders_trend) ? dataToProcess.traders_trend : []
+        const tradersBuyersTrend = Array.isArray(dataToProcess.traders_buyers_trend) ? dataToProcess.traders_buyers_trend : []
+        const tradersSellersTrend = Array.isArray(dataToProcess.traders_sellers_trend) ? dataToProcess.traders_sellers_trend : []
 
         summary = {
           total_traders: dataToProcess.traders ?? null,
@@ -855,11 +846,11 @@ async function handleFunctionCall(functionCall: { name: string; args: Record<str
       const analyticsData = await callBitsCrunchAPI("collection-analytics", { contract_address, blockchain, time_range: "30d" });
       if (analyticsData && analyticsData.data && analyticsData.data[0]) {
         const latestAnalytics = analyticsData.data[0];
-        const blockDates = parseArrayString(latestAnalytics.block_dates || "{}");
-        const volumeTrend = parseArrayString(latestAnalytics.volume_trend || "{}").map(Number);
-        const salesTrend = parseArrayString(latestAnalytics.sales_trend || "{}").map(Number);
-        const transactionsTrend = parseArrayString(latestAnalytics.transactions_trend || "{}").map(Number);
-        const assetsTrend = parseArrayString(latestAnalytics.assets_trend || "{}").map(Number);
+        const blockDates = Array.isArray(latestAnalytics.block_dates) ? latestAnalytics.block_dates : []
+        const volumeTrend = Array.isArray(latestAnalytics.volume_trend) ? latestAnalytics.volume_trend : []
+        const salesTrend = Array.isArray(latestAnalytics.sales_trend) ? latestAnalytics.sales_trend : []
+        const transactionsTrend = Array.isArray(latestAnalytics.transactions_trend) ? latestAnalytics.transactions_trend : []
+        const assetsTrend = Array.isArray(latestAnalytics.assets_trend) ? latestAnalytics.assets_trend : []
 
         trendData.volumeChartData = blockDates.map((date, i) => ({ date: new Date(date).toLocaleDateString(), value: volumeTrend[i] || 0 }));
         trendData.salesChartData = blockDates.map((date, i) => ({ date: new Date(date).toLocaleDateString(), value: salesTrend[i] || 0 }));

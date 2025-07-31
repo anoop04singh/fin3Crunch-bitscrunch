@@ -60,21 +60,22 @@ const getRankClass = (index: number) => {
 
 const parseTrendData = (data: any): { date: string; [key: string]: any }[] => {
   try {
-    const parse = (str: string | null | undefined) => {
-      if (!str || typeof str !== "string" || str.length <= 2) return []
-      return str
+    const safeParse = (data: string | any[] | null | undefined): any[] => {
+      if (Array.isArray(data)) return data
+      if (!data || typeof data !== "string" || data.length <= 2) return []
+      return data
         .slice(1, -1)
         .split(",")
         .map((s) => s.replace(/"/g, "").trim())
     }
-    const dates = parse(data.block_dates)
+    const dates = safeParse(data.block_dates)
     if (dates.length === 0) return []
 
     const trends: { [key: string]: number[] } = {
-      volume: parse(data.washtrade_volume_trend).map(Number),
-      assets: parse(data.washtrade_assets_trend).map(Number),
-      sales: parse(data.washtrade_suspect_sales_trend).map(Number),
-      wallets: parse(data.washtrade_wallets_trend).map(Number),
+      volume: safeParse(data.washtrade_volume_trend).map(Number),
+      assets: safeParse(data.washtrade_assets_trend).map(Number),
+      sales: safeParse(data.washtrade_suspect_sales_trend).map(Number),
+      wallets: safeParse(data.washtrade_wallets_trend).map(Number),
     }
 
     return dates.map((date, i) => ({
