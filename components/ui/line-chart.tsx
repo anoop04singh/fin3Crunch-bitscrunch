@@ -91,19 +91,30 @@ export function LineChartComponent({ labels, datasets, className }: LineChartPro
   const chartData = {
     labels,
     datasets: datasets.map((dataset) => {
-      const color = dataset.color
+      let resolvedColor = dataset.color
+      if (typeof window !== "undefined" && dataset.color.includes("var(--")) {
+        const match = dataset.color.match(/--[a-zA-Z0-9-]+/)
+        if (match) {
+          const varName = match[0]
+          const hslValues = getComputedStyle(document.documentElement).getPropertyValue(varName).trim()
+          if (hslValues) {
+            resolvedColor = `hsl(${hslValues})`
+          }
+        }
+      }
+
       return {
         label: dataset.label,
         data: dataset.data,
-        borderColor: color,
+        borderColor: resolvedColor,
         backgroundColor: (context: ScriptableContext<"line">) => {
           const chart = context.chart
           const { ctx, chartArea } = chart
           if (!chartArea) {
             return null
           }
-          const colorStart = color.replace("hsl", "hsla").replace(")", ", 0.4)")
-          const colorEnd = color.replace("hsl", "hsla").replace(")", ", 0)")
+          const colorStart = resolvedColor.replace("hsl", "hsla").replace(")", ", 0.4)")
+          const colorEnd = resolvedColor.replace("hsl", "hsla").replace(")", ", 0)")
           const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom)
           gradient.addColorStop(0, colorStart)
           gradient.addColorStop(1, colorEnd)
@@ -113,7 +124,7 @@ export function LineChartComponent({ labels, datasets, className }: LineChartPro
         fill: true,
         pointRadius: 0,
         pointHoverRadius: 5,
-        pointBackgroundColor: color,
+        pointBackgroundColor: resolvedColor,
         pointBorderColor: "hsl(0 0% 3.9%)",
         pointHoverBorderWidth: 2,
       }
