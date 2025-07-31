@@ -508,25 +508,19 @@ export default function DetailedReportsPage() {
               <h3 className="text-2xl font-bold text-white mb-6 text-center">Collection Trends (30d)</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {["volume", "sales", "transactions", "assets"].map((key) => {
-                  const chartData = {
-                    labels: reportData.collectionTrends?.map((d) => d.date) || [],
-                    datasets: [
-                      {
-                        label: key.charAt(0).toUpperCase() + key.slice(1),
-                        data: reportData.collectionTrends?.map((d) => d[key]) || [],
-                        borderColor: "hsl(160 100% 40%)",
-                        backgroundColor: "hsla(160, 100%, 40%, 0.2)",
-                        tension: 0.4,
-                        fill: true,
-                        pointRadius: 0,
-                      },
-                    ],
-                  }
+                  const labels = reportData.collectionTrends?.map((d) => d.date) || []
+                  const datasets = [
+                    {
+                      label: key.charAt(0).toUpperCase() + key.slice(1),
+                      data: reportData.collectionTrends?.map((d) => d[key]) || [],
+                      color: "hsl(160 100% 40%)",
+                    },
+                  ]
                   return (
                     <div key={key} className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-4">
                       <h4 className="text-base font-medium text-white mb-4 capitalize text-center">{key} Trend</h4>
                       <div className="h-[200px] w-full">
-                        <LineChartComponent data={chartData} />
+                        <LineChartComponent labels={labels} datasets={datasets} />
                       </div>
                     </div>
                   )

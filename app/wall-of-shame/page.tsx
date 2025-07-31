@@ -418,25 +418,19 @@ export default function WallOfShamePage() {
                           <h3 className="text-2xl font-bold text-white mb-6 text-center">24-Hour Wash Trade Trends</h3>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             {["volume", "assets", "sales", "wallets"].map((key) => {
-                              const chartData = {
-                                labels: detailedData.trends?.map((d) => d.date) || [],
-                                datasets: [
-                                  {
-                                    label: key.charAt(0).toUpperCase() + key.slice(1),
-                                    data: detailedData.trends?.map((d) => d[key]) || [],
-                                    borderColor: "hsl(260 100% 70%)",
-                                    backgroundColor: "hsla(260, 100%, 70%, 0.2)",
-                                    tension: 0.4,
-                                    fill: true,
-                                    pointRadius: 0,
-                                  },
-                                ],
-                              }
+                              const labels = detailedData.trends?.map((d) => d.date) || []
+                              const datasets = [
+                                {
+                                  label: key.charAt(0).toUpperCase() + key.slice(1),
+                                  data: detailedData.trends?.map((d) => d[key]) || [],
+                                  color: "hsl(260 100% 70%)",
+                                },
+                              ]
                               return (
                                 <div key={key} className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-4">
                                   <h4 className="text-base font-medium text-white mb-4 capitalize text-center">{key} Trend</h4>
                                   <div className="h-[150px] w-full">
-                                    <LineChartComponent data={chartData} />
+                                    <LineChartComponent labels={labels} datasets={datasets} />
                                   </div>
                                 </div>
                               )
