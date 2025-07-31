@@ -6,10 +6,9 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { XCircle, Loader2, BarChart4, X } from "lucide-react"
 import { sleep, cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { Line, LineChart, XAxis, YAxis, CartesianGrid } from "recharts"
 import { motion, AnimatePresence } from "framer-motion"
 import { AnimatedSection } from "@/components/animated-section"
+import { LineChartComponent } from "@/components/ui/line-chart"
 
 // Interfaces
 interface WashTradedCollection {
@@ -417,20 +416,30 @@ export default function WallOfShamePage() {
                         <AnimatedSection delay={0.3}>
                           <h3 className="text-2xl font-bold text-white mb-6 text-center">24-Hour Wash Trade Trends</h3>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            {["volume", "assets", "sales", "wallets"].map((key) => (
-                              <div key={key} className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-4">
-                                <h4 className="text-base font-medium text-white mb-4 capitalize text-center">{key} Trend</h4>
-                                <ChartContainer config={{}} className="h-[150px] w-full">
-                                  <LineChart data={detailedData.trends} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                                    <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                                    <ChartTooltip content={<ChartTooltipContent />} />
-                                    <Line type="monotone" dataKey={key} stroke="hsl(var(--chart-4))" dot={false} />
-                                  </LineChart>
-                                </ChartContainer>
-                              </div>
-                            ))}
+                            {["volume", "assets", "sales", "wallets"].map((key) => {
+                              const chartData = {
+                                labels: detailedData.trends?.map((d) => d.date) || [],
+                                datasets: [
+                                  {
+                                    label: key.charAt(0).toUpperCase() + key.slice(1),
+                                    data: detailedData.trends?.map((d) => d[key]) || [],
+                                    borderColor: "hsl(260 100% 70%)",
+                                    backgroundColor: "hsla(260, 100%, 70%, 0.2)",
+                                    tension: 0.4,
+                                    fill: true,
+                                    pointRadius: 0,
+                                  },
+                                ],
+                              }
+                              return (
+                                <div key={key} className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-4">
+                                  <h4 className="text-base font-medium text-white mb-4 capitalize text-center">{key} Trend</h4>
+                                  <div className="h-[150px] w-full">
+                                    <LineChartComponent data={chartData} />
+                                  </div>
+                                </div>
+                              )
+                            })}
                           </div>
                         </AnimatedSection>
                       )}

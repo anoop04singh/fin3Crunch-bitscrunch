@@ -20,13 +20,12 @@ import {
   ChevronRight,
   TrendingDown,
 } from "lucide-react"
-import { Line, LineChart, XAxis, YAxis, CartesianGrid } from "recharts"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { XCircle } from "lucide-react"
 import { sleep } from "@/lib/utils"
 import { AnimatedSection } from "@/components/animated-section"
 import { toast } from "sonner"
 import { MarkdownRenderer } from "@/components/markdown-renderer"
+import { LineChartComponent } from "@/components/ui/line-chart"
 
 // Interfaces
 interface NftMetadata {
@@ -507,20 +506,30 @@ export default function DetailedReportsPage() {
             <AnimatedSection>
               <h3 className="text-2xl font-bold text-white mb-6 text-center">Collection Trends (30d)</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {["volume", "sales", "transactions", "assets"].map((key) => (
-                  <div key={key} className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-4">
-                    <h4 className="text-base font-medium text-white mb-4 capitalize text-center">{key} Trend</h4>
-                    <ChartContainer config={{}} className="h-[200px] w-full">
-                      <LineChart data={reportData.collectionTrends} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                        <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Line type="monotone" dataKey={key} stroke="hsl(160 100% 40%)" strokeWidth={2} dot={false} />
-                      </LineChart>
-                    </ChartContainer>
-                  </div>
-                ))}
+                {["volume", "sales", "transactions", "assets"].map((key) => {
+                  const chartData = {
+                    labels: reportData.collectionTrends?.map((d) => d.date) || [],
+                    datasets: [
+                      {
+                        label: key.charAt(0).toUpperCase() + key.slice(1),
+                        data: reportData.collectionTrends?.map((d) => d[key]) || [],
+                        borderColor: "hsl(160 100% 40%)",
+                        backgroundColor: "hsla(160, 100%, 40%, 0.2)",
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 0,
+                      },
+                    ],
+                  }
+                  return (
+                    <div key={key} className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-4">
+                      <h4 className="text-base font-medium text-white mb-4 capitalize text-center">{key} Trend</h4>
+                      <div className="h-[200px] w-full">
+                        <LineChartComponent data={chartData} />
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </AnimatedSection>
           )}
