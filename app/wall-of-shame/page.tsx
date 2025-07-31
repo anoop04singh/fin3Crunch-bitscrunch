@@ -7,7 +7,7 @@ import { XCircle, Loader2, BarChart4, X } from "lucide-react"
 import { sleep, cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts"
+import { Line, LineChart, XAxis, YAxis, CartesianGrid } from "recharts"
 import { motion, AnimatePresence } from "framer-motion"
 import { AnimatedSection } from "@/components/animated-section"
 
@@ -421,15 +421,13 @@ export default function WallOfShamePage() {
                               <div key={key} className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-4">
                                 <h4 className="text-base font-medium text-white mb-4 capitalize text-center">{key} Trend</h4>
                                 <ChartContainer config={{}} className="h-[150px] w-full">
-                                  <ResponsiveContainer>
-                                    <LineChart data={detailedData.trends} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                                      <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                                      <ChartTooltip content={<ChartTooltipContent />} />
-                                      <Line type="monotone" dataKey={key} stroke="hsl(var(--chart-4))" dot={false} />
-                                    </LineChart>
-                                  </ResponsiveContainer>
+                                  <LineChart data={detailedData.trends} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                                    <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={10} />
+                                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} />
+                                    <ChartTooltip content={<ChartTooltipContent />} />
+                                    <Line type="monotone" dataKey={key} stroke="hsl(var(--chart-4))" dot={false} />
+                                  </LineChart>
                                 </ChartContainer>
                               </div>
                             ))}

@@ -20,7 +20,7 @@ import {
   ChevronRight,
   TrendingDown,
 } from "lucide-react"
-import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts"
+import { Line, LineChart, XAxis, YAxis, CartesianGrid } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { XCircle } from "lucide-react"
 import { sleep } from "@/lib/utils"
@@ -511,15 +511,13 @@ export default function DetailedReportsPage() {
                   <div key={key} className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-4">
                     <h4 className="text-base font-medium text-white mb-4 capitalize text-center">{key} Trend</h4>
                     <ChartContainer config={{}} className="h-[200px] w-full">
-                      <ResponsiveContainer>
-                        <LineChart data={reportData.collectionTrends} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                          <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                          <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                          <ChartTooltip content={<ChartTooltipContent />} />
-                          <Line type="monotone" dataKey={key} stroke="hsl(160 100% 40%)" strokeWidth={2} dot={false} />
-                        </LineChart>
-                      </ResponsiveContainer>
+                      <LineChart data={reportData.collectionTrends} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={10} />
+                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Line type="monotone" dataKey={key} stroke="hsl(160 100% 40%)" strokeWidth={2} dot={false} />
+                      </LineChart>
                     </ChartContainer>
                   </div>
                 ))}
