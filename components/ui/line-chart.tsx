@@ -113,8 +113,8 @@ export function LineChartComponent({ labels, datasets, className }: LineChartPro
           if (!chartArea) {
             return null
           }
-          const colorStart = resolvedColor.replace("hsl", "hsla").replace(")", ", 0.4)")
-          const colorEnd = resolvedColor.replace("hsl", "hsla").replace(")", ", 0)")
+          const colorStart = resolvedColor.replace(")", " / 0.4)").replace("hsl(", "hsla(")
+          const colorEnd = resolvedColor.replace(")", " / 0)").replace("hsl(", "hsla(")
           const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom)
           gradient.addColorStop(0, colorStart)
           gradient.addColorStop(1, colorEnd)
