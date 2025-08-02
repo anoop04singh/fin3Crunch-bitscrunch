@@ -134,10 +134,10 @@ export default function CommandCenterPage() {
           fetchApiData("/wallet/score", address),
         ])
 
-        setNftHoldings(nftHoldingsData || [])
-        setWalletScore(scoreData?.[0] || null)
+        setNftHoldings(Array.isArray(nftHoldingsData) ? nftHoldingsData : [])
+        setWalletScore(Array.isArray(scoreData) && scoreData.length > 0 ? scoreData[0] : null)
 
-        const tokens: Erc20Holding[] = erc20HoldingsData || []
+        const tokens: Erc20Holding[] = Array.isArray(erc20HoldingsData) ? erc20HoldingsData : []
         if (tokens.length > 0) {
           const WETH_ADDRESS = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
           const tokenAddresses = tokens.map((token) => {
