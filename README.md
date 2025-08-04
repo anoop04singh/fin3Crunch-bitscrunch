@@ -196,3 +196,8 @@ Here are some examples of what you can ask the AI agent to see its capabilities:
 -   "Bhai, yeh wallet check karke batao: 0x..."
 -   "Market ka kya haal hai?"
 -   "BAYC collection ke baare mein sab kuch batao."
+
+#### Hinglish Queries
+-   "Bhai, yeh wallet check karke batao: 0x..."
+-   "Market ka kya haal hai?"
+-   "BAYC collection ke baare mein sab kuch batao."
