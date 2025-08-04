@@ -21,6 +21,7 @@ import { LineChartCard } from "@/components/chat/line-chart-card"
 import { AnimatedSection } from "@/components/animated-section"
 import { motion } from "framer-motion"
 import { ReportCard } from "@/components/chat/report-card"
+import { WalletReportCard } from "@/components/chat/wallet-report-card"
 import { toast } from "sonner"
 
 interface Message {
@@ -39,6 +40,7 @@ interface Message {
   holdersChartData?: { date: string; value: number }[]
   whalesChartData?: { date: string; value: number }[]
   reportData?: any
+  walletReportData?: any
 }
 
 const SUPPORTED_BLOCKCHAINS = ["ethereum", "polygon", "avalanche", "binance", "solana", "bitcoin", "base", "linea"]
@@ -328,6 +330,7 @@ export default function AgentNetworkPage() {
                       {msg.data?.metrics && <MetricsCard metrics={msg.data.metrics} />}
                       {msg.data?.detailedData && <DataTable data={msg.data.detailedData} title="Top Deals" />}
                       {msg.reportData && <ReportCard reportData={msg.reportData} />}
+                      {msg.walletReportData && <WalletReportCard reportData={msg.walletReportData} />}
                       {msg.chartData && <LineChartCard data={msg.chartData} title="Price History" dataKey="price" color="hsl(var(--chart-1))" />}
                       {msg.volumeChartData && <LineChartCard data={msg.volumeChartData} title="Volume Trend" dataKey="value" color="hsl(var(--chart-2))" />}
                       {msg.salesChartData && <LineChartCard data={msg.salesChartData} title="Sales Trend" dataKey="value" color="hsl(var(--chart-3))" />}

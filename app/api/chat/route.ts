@@ -200,6 +200,11 @@ const getCollectionOverviewSchema = z.object({
   blockchain: z.string().optional(),
 })
 
+const getWalletOverviewSchema = z.object({
+  walletAddress: z.string({ required_error: "A walletAddress is required for a wallet overview." }),
+  blockchain: z.string().optional(),
+})
+
 const queryNFTDataSchema = z.discriminatedUnion("endpoint", [
   z.object({ endpoint: z.literal("token-balance"), walletAddress: z.string(), token_address: z.string().optional(), blockchain: z.string().optional() }),
   z.object({ endpoint: z.literal("token-metrics"), token_address: z.string(), blockchain: z.string().optional() }),
@@ -298,6 +303,25 @@ const getCollectionOverviewFunction = {
       },
     },
     required: ["contract_address"],
+  },
+}
+
+const getWalletOverviewFunction = {
+  name: "getWalletOverview",
+  description: "Generates a comprehensive overview for a specific wallet address. Use this for requests like 'analyze my wallet', 'give me a summary of this wallet', or 'wallet overview'. This tool fetches all necessary wallet data in one go.",
+  parameters: {
+    type: "object",
+    properties: {
+      walletAddress: {
+        type: "string",
+        description: "The wallet address to analyze.",
+      },
+      blockchain: {
+        type: "string",
+        description: "The blockchain of the wallet. Defaults to 'ethereum' if not provided.",
+      },
+    },
+    required: ["walletAddress"],
   },
 }
 
@@ -792,6 +816,13 @@ async function handleFunctionCall(functionCall: { name: string; args: Record<str
       console.error(errorMessage)
       return { success: false, error: errorMessage }
     }
+  } else if (name === "getWalletOverview") {
+    const validation = getWalletOverviewSchema.safeParse(args)
+    if (!validation.success) {
+      const errorMessage = `Invalid parameters for getWalletOverview: ${JSON.stringify(validation.error.flatten().fieldErrors)}`
+      console.error(errorMessage)
+      return { success: false, error: errorMessage }
+    }
   } else if (name === "queryNFTData") {
     const validation = queryNFTDataSchema.safeParse(args)
     if (!validation.success) {
@@ -801,6 +832,70 @@ async function handleFunctionCall(functionCall: { name: string; args: Record<str
     }
   }
   // END VALIDATION STEP
+
+  if (name === "getWalletOverview") {
+    const { walletAddress } = args
+    const blockchain = args.blockchain || "ethereum"
+
+    const apiCalls = [
+      { key: "nftHoldings", endpoint: "wallet-balance-nft", params: { wallet: walletAddress, blockchain } },
+      { key: "tokenHoldings", endpoint: "wallet-balance-token", params: { address: walletAddress, blockchain } },
+      { key: "walletScore", endpoint: "wallet-score", params: { wallet_address: walletAddress, blockchain } },
+      { key: "walletMetrics", endpoint: "wallet-metrics", params: { wallet: walletAddress, blockchain } },
+    ]
+
+    const aggregatedWalletData: any = { walletAddress }
+
+    const results = await Promise.allSettled(apiCalls.map((call) => callBitsCrunchAPI(call.endpoint, call.params)))
+
+    results.forEach((result, index) => {
+      const key = apiCalls[index].key
+      if (result.status === "fulfilled" && result.value) {
+        const data = result.value
+        aggregatedWalletData[key] = Array.isArray(data) && data.length > 0 ? (key.endsWith("s") ? data : data[0]) : Array.isArray(data) ? [] : data
+      } else {
+        console.error(`Error fetching data for ${key}:`, result.status === "rejected" ? result.reason : "No data")
+        aggregatedWalletData[key] = key.endsWith("s") ? [] : null
+      }
+    })
+
+    if (Array.isArray(aggregatedWalletData.tokenHoldings) && aggregatedWalletData.tokenHoldings.length > 0) {
+      try {
+        const WETH_ADDRESS = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        const tokenAddresses = aggregatedWalletData.tokenHoldings.map((token: any) =>
+          !token.token_address || token.token_address.startsWith("0x0000000000000000000000000000000000000000")
+            ? WETH_ADDRESS
+            : token.token_address,
+        )
+
+        const priceData = await callBitsCrunchAPI("token-dex-price", { token_address: tokenAddresses.join(","), blockchain })
+
+        const priceMap = new Map<string, number>()
+        if (priceData && Array.isArray(priceData)) {
+          priceData.forEach((priceInfo: any) => {
+            priceMap.set(priceInfo.token_address.toLowerCase(), priceInfo.usd_value)
+          })
+        }
+
+        aggregatedWalletData.tokenHoldings = aggregatedWalletData.tokenHoldings.map((token: any) => {
+          const addressToLookup = (
+            !token.token_address || token.token_address.startsWith("0x0000000000000000000000000000000000000000")
+              ? WETH_ADDRESS
+              : token.token_address
+          ).toLowerCase()
+          const price = priceMap.get(addressToLookup)
+          return { ...token, usd_value: price ? token.quantity * price : 0 }
+        })
+      } catch (e) {
+        console.error("Error fetching token prices for wallet overview:", e)
+      }
+    }
+
+    return {
+      success: true,
+      walletReportData: aggregatedWalletData,
+    }
+  }
 
   if (name === "getCollectionOverview") {
     const { contract_address, token_id } = args
@@ -946,7 +1041,7 @@ export async function POST(req: NextRequest) {
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY)
     const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash",
-      tools: [{ functionDeclarations: [queryNFTDataFunction, getCollectionOverviewFunction] }],
+      tools: [{ functionDeclarations: [queryNFTDataFunction, getCollectionOverviewFunction, getWalletOverviewFunction] }],
     })
 
     const systemPrompt = `You are an expert Web3 financial advisor and analytics assistant named "fin3Crunch AI". You have access to BitsCrunch APIs for comprehensive NFT/WEB3 data analysis.
@@ -960,6 +1055,7 @@ export async function POST(req: NextRequest) {
 **Tool Selection Guide:**
 - For simple, direct questions about a single metric (e.g., "what's the floor price?", "get me the metadata"), use the \`queryNFTData\` tool with the most specific endpoint.
 - For broad requests like "give me a detailed report", "full analysis", "tell me everything about...", or "should I buy this?", you MUST use the \`getCollectionOverview\` tool. This tool is optimized to gather all necessary data in one step.
+- For wallet-related queries like "analyze my wallet" or "give me a summary of this wallet", you MUST use the \`getWalletOverview\` tool.
 
 **Address Handling:**
 - The user's connected wallet address is provided in the context for wallet-specific queries (e.g., 'show me my NFTs').
@@ -981,6 +1077,11 @@ export async function POST(req: NextRequest) {
 - **User Query:** "Is BAYC #8817 a good buy right now?"
 - **Your Action (Single Tool Call):**
   1. \`getCollectionOverview({ contract_address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D', token_id: '8817' })\`
+
+**Scenario 3: User asks for a wallet analysis.**
+- **User Query:** "Analyze wallet 0x123..." or "What's in my wallet?" (if connected)
+- **Your Action (Single Tool Call):**
+  1. \`getWalletOverview({ walletAddress: '0x123...' })\`
 
 **Investment Advisor Routine (Multi-Step):**
 1.  **Initial Query:** If the user asks for investment advice (e.g., "what to buy?", "good deals"), your first action is ALWAYS to call \`queryNFTData({ endpoint: 'nft-top-deals' })\`.
@@ -1056,6 +1157,7 @@ For investment or buy/sell recommendations:
     let holdersChartData = null
     let whalesChartData = null
     let reportData: any = null
+    let walletReportData: any = null
     let finalText = response.text()
 
     const functionCalls = response.functionCalls()
@@ -1071,6 +1173,8 @@ For investment or buy/sell recommendations:
           salesChartData = result.salesChartData;
           transactionsChartData = result.transactionsChartData;
           assetsChartData = result.assetsChartData;
+        } else if (functionCall.name === 'getWalletOverview') {
+          walletReportData = result.walletReportData;
         } else {
           responseData = {
             metrics: result.data,
@@ -1141,6 +1245,7 @@ For investment or buy/sell recommendations:
       holdersChartData: holdersChartData,
       whalesChartData,
       reportData: reportData,
+      walletReportData: walletReportData,
     })
   } catch (error) {
     console.error("Chat API error:", error)
