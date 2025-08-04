@@ -5,7 +5,7 @@
 
 
 
-**fin3Crunch AI** is a sophisticated, **AI-powered analytics platform** designed to provide deep insights into the Web3 ecosystem. It combines a sleek, minimal user interface with powerful backend services to deliver real-time data on NFT collections, tokens, and wallet activity. At its core is an **intelligent AI agent** that allows users to query complex **blockchain data using natural language.**
+**fin3Crunch AI** is a sophisticated, multi-lingual (hinglish me bhi work karta hai), **AI-powered analytics platform** designed to provide deep insights into the Web3 ecosystem. It combines a sleek, minimal user interface with powerful backend services to deliver real-time data on NFT collections, tokens, and wallet activity. At its core is an **intelligent AI agent** that allows users to query complex **blockchain data using natural language.**
 
 ---
 
@@ -65,6 +65,15 @@ The heart of the application is the conversational AI agent, which understands u
     6.  Gemini uses this data to formulate a human-readable summary and selects the appropriate UI components (like `ReportCard`, `MetricsCard`, `LineChartCard`) to visually represent the information.
  
 <img width="1919" height="786" alt="image" src="https://github.com/user-attachments/assets/46f477d9-2357-4d26-85f2-a18233a5f6ea" />
+
+**The Hinglish Output**:
+
+<img width="1630" height="676" alt="Screenshot 2025-08-04 161942" src="https://github.com/user-attachments/assets/4f7c3521-fe9a-4db4-a5b6-5570cdeccada" />
+
+**Wallet Analysis**:
+
+<img width="1559" height="739" alt="image" src="https://github.com/user-attachments/assets/ae5958b6-9250-4e12-8a6a-3dd9f8005019" />
+
 
 
 ### 2. Detailed Reports Page
