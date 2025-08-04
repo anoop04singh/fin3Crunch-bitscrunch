@@ -7,6 +7,8 @@
 
 **fin3Crunch AI** is a sophisticated, multi-lingual (hinglish me bhi work karta hai), **AI-powered analytics platform** designed to provide deep insights into the Web3 ecosystem. It combines a sleek, minimal user interface with powerful backend services to deliver real-time data on NFT collections, tokens, and wallet activity. At its core is an **intelligent AI agent** that allows users to query complex **blockchain data using natural language.**
 
+*List of all the Endpoints Used: [https://medium.com/@singanoop04/fin3crunch-api-docs-4f69a4435eec](https://medium.com/@singanoop04/fin3crunch-api-docs-4f69a4435eec)*
+
 ---
 
 ## ✨ Features
