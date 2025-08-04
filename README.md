@@ -74,6 +74,11 @@ The heart of the application is the conversational AI agent, which understands u
 
 <img width="1559" height="739" alt="image" src="https://github.com/user-attachments/assets/ae5958b6-9250-4e12-8a6a-3dd9f8005019" />
 
+**Token Analysis**:
+
+<img width="1652" height="548" alt="Screenshot 2025-08-04 170646" src="https://github.com/user-attachments/assets/12bb9f9f-b430-492d-b39d-7bacad65ad74" />
+
+<img width="1647" height="688" alt="Screenshot 2025-08-04 170630" src="https://github.com/user-attachments/assets/9c54d9ca-6891-478c-aee0-20ab4cc397a9" />
 
 
 ### 2. Detailed Reports Page
