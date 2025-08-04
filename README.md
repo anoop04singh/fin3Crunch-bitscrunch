@@ -15,6 +15,8 @@
 -   **📊 Personalized Dashboard:** Users can connect their MetaMask wallet to get a personalized overview of their NFT and ERC20 token holdings, total asset value, and a detailed wallet risk score.
 -   **📈 In-Depth NFT & Collection Reports:** Generate comprehensive on-demand reports for any NFT collection or individual token on the Ethereum blockchain, including market analytics, price estimates, charts and whale activity.
 -   **🛡️ Wall of Shame:** A dedicated section that highlights NFT collections and specific tokens with the highest levels of wash trading activity, promoting transparency in the ecosystem.
+-   **🔍 Comprehensive Wallet Analysis:** The AI agent can perform a deep-dive analysis of any wallet, presenting a detailed report on holdings, transaction history, and risk scores directly in the chat.
+-   **🌐 Multi-lingual Support:** Interact with the AI in Hinglish for a more natural and accessible conversation.
 -   **🎨 Dynamic & Responsive UI:** A modern, responsive interface built with shadcn/ui and Tailwind CSS, featuring smooth animations and a unique dynamic background that reacts to mouse movement.
 -   **🔐 Secure Backend Proxy:** All external API calls are routed through a secure Next.js backend, ensuring that sensitive API keys are never exposed on the client-side.
 
@@ -49,9 +51,10 @@ The heart of the application is the conversational AI agent, which understands u
 
 -   **Core Mechanism: Function Calling:** The AI's true power lies in its ability to use "tools" (functions). Instead of just generating text, Gemini can analyze a user's prompt and decide to call a specific function to get live data from the BitsCrunch API. This ensures answers are accurate and up-to-date.
 
--   **The Tools:** The AI has two primary tools at its disposal:
+-   **The Tools:** The AI has three primary tools at its disposal:
     1.  `queryNFTData`: Used for simple, direct questions about a single metric (e.g., "what's the floor price?", "get me the metadata"). It calls a single, specific BitsCrunch endpoint.
     2.  `getCollectionOverview`: This is the power tool, used for broad, complex requests (e.g., "give me a full analysis of a collection," "is this NFT a good buy?"). It makes multiple, parallel API calls to BitsCrunch to gather a complete picture (metadata, analytics, scores, whale data, price estimates) and then presents it in a structured `ReportCard` component.
+    3.  `getWalletOverview`: A powerful tool for analyzing a specific wallet address. It fetches NFT and token holdings, wallet score, and key metrics to provide a complete financial picture, presented in a dedicated `WalletReportCard`.
 
 -   **The Process:**
     1.  A user sends a message (e.g., "Tell me about BAYC #8817").
@@ -168,6 +171,7 @@ Here are some examples of what you can ask the AI agent to see its capabilities:
 -   "Show me my NFTs."
 -   "What is my wallet's risk score?"
 -   "Analyze my wallet's holdings."
+-   "Give me a full analysis of wallet 0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B."
 
 #### Collection Analysis (You may be prompted for a contract address, if it is not in context.)
 -   "Give me a full report on the Pudgy Penguins collection."
@@ -178,3 +182,8 @@ Here are some examples of what you can ask the AI agent to see its capabilities:
 -   "Tell me everything about BAYC #8817."
 -   "What's the estimated price for CryptoPunk #7523?"
 -   "Is it a good time to buy MAYC #101?"
+
+#### Hinglish Queries
+-   "Bhai, yeh wallet check karke batao: 0x..."
+-   "Market ka kya haal hai?"
+-   "BAYC collection ke baare mein sab kuch batao."
