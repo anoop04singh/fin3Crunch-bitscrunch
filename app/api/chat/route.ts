@@ -357,7 +357,8 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
         endpoint.includes("token-price-prediction") ||
         endpoint.includes("market-insights-analytics") ||
         endpoint.includes("market-insights-traders") ||
-        endpoint.includes("market-insights-holders")
+        endpoint.includes("market-insights-holders") ||
+        endpoint.includes("token-dex-price")
       ) {
         dataToProcess = rawData.data[0] || {}
       } else {
@@ -719,6 +720,13 @@ function processAndSummarizeData(rawData: any, endpoint: string): any {
         upper_bound: dataToProcess.price_estimate_upper_bound ?? null,
         volatility_influence: dataToProcess.price_range_volatility_influence ?? null,
         trading_volume_trend: dataToProcess.trading_volume_trend_influence ?? null,
+      }
+    } else if (endpoint.includes("token-dex-price")) {
+      summary = {
+        token_name: dataToProcess.token_name || "N/A",
+        token_symbol: dataToProcess.token_symbol || "N/A",
+        usd_value: dataToProcess.usd_value ?? null,
+        token_address: dataToProcess.token_address || "N/A",
       }
     } else {
       const fallbackSummary: Record<string, any> = {}
