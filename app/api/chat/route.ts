@@ -863,38 +863,6 @@ async function handleFunctionCall(functionCall: { name: string; args: Record<str
       }
     })
 
-    if (Array.isArray(aggregatedWalletData.tokenHoldings) && aggregatedWalletData.tokenHoldings.length > 0) {
-      try {
-        const WETH_ADDRESS = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
-        const tokenAddresses = aggregatedWalletData.tokenHoldings.map((token: any) =>
-          !token.token_address || token.token_address.startsWith("0x0000000000000000000000000000000000000000")
-            ? WETH_ADDRESS
-            : token.token_address,
-        )
-
-        const priceData = await callBitsCrunchAPI("token-dex-price", { token_address: tokenAddresses.join(","), blockchain })
-
-        const priceMap = new Map<string, number>()
-        if (priceData && Array.isArray(priceData.data)) {
-          priceData.data.forEach((priceInfo: any) => {
-            priceMap.set(priceInfo.token_address.toLowerCase(), priceInfo.usd_value)
-          })
-        }
-
-        aggregatedWalletData.tokenHoldings = aggregatedWalletData.tokenHoldings.map((token: any) => {
-          const addressToLookup = (
-            !token.token_address || token.token_address.startsWith("0x0000000000000000000000000000000000000000")
-              ? WETH_ADDRESS
-              : token.token_address
-          ).toLowerCase()
-          const price = priceMap.get(addressToLookup)
-          return { ...token, usd_value: price ? token.quantity * price : 0 }
-        })
-      } catch (e) {
-        console.error("Error fetching token prices for wallet overview:", e)
-      }
-    }
-
     return {
       success: true,
       walletReportData: aggregatedWalletData,
