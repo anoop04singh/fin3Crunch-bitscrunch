@@ -850,11 +850,15 @@ async function handleFunctionCall(functionCall: { name: string; args: Record<str
 
     results.forEach((result, index) => {
       const key = apiCalls[index].key
-      if (result.status === "fulfilled" && result.value) {
-        const data = result.value
-        aggregatedWalletData[key] = Array.isArray(data) && data.length > 0 ? (key.endsWith("s") ? data : data[0]) : Array.isArray(data) ? [] : data
+      if (result.status === "fulfilled" && result.value && result.value.data) {
+        const responseData = result.value.data
+        if (key === "walletScore" || key === "walletMetrics") {
+          aggregatedWalletData[key] = Array.isArray(responseData) && responseData.length > 0 ? responseData[0] : null
+        } else {
+          aggregatedWalletData[key] = Array.isArray(responseData) ? responseData : []
+        }
       } else {
-        console.error(`Error fetching data for ${key}:`, result.status === "rejected" ? result.reason : "No data")
+        console.error(`Error fetching data for ${key}:`, result.status === "rejected" ? result.reason : "No data or empty response")
         aggregatedWalletData[key] = key.endsWith("s") ? [] : null
       }
     })
@@ -871,8 +875,8 @@ async function handleFunctionCall(functionCall: { name: string; args: Record<str
         const priceData = await callBitsCrunchAPI("token-dex-price", { token_address: tokenAddresses.join(","), blockchain })
 
         const priceMap = new Map<string, number>()
-        if (priceData && Array.isArray(priceData)) {
-          priceData.forEach((priceInfo: any) => {
+        if (priceData && Array.isArray(priceData.data)) {
+          priceData.data.forEach((priceInfo: any) => {
             priceMap.set(priceInfo.token_address.toLowerCase(), priceInfo.usd_value)
           })
         }
